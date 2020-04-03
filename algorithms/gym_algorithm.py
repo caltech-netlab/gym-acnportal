@@ -4,15 +4,13 @@ Algorithms used for deploying trained RL models.
 """
 import numpy as np
 
-from .base_algorithm import BaseAlgorithm
-from ..acnsim.interface import GymTrainedInterface, \
-    GymTrainingInterface, Interface
-from importlib.util import find_spec
 from typing import Optional, Dict, List, Any
 
-if find_spec("gym") is not None:
-    from ..acnsim.gym_acnsim.envs import BaseSimEnv
-del find_spec
+from acnportal.acnsim import Interface, EV
+from acnportal.algorithms import BaseAlgorithm
+
+from gym_acnsim.envs import BaseSimEnv
+from gym_acnsim.interfaces import GymTrainedInterface, GymTrainingInterface
 
 
 class SimRLModelWrapper:
@@ -211,7 +209,7 @@ class GymTrainedAlgorithm(GymBaseAlgorithm):
         """
         self._model = model
 
-    def schedule(self, active_evs):
+    def schedule(self, active_evs: List[EV]) -> Dict[str, List[float]]:
         """ Creates a schedule of charging rates for each EVSE in the
         network. This only works if a model and environment have been
         registered.

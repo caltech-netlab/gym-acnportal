@@ -13,7 +13,7 @@ from .base_env import BaseSimEnv
 from . import observation as obs, reward_functions as rf
 from .action_spaces import SimAction, zero_centered_single_charging_schedule
 from .observation import SimObservation
-from ...interface import GymTrainedInterface
+from ..interfaces import GymTrainedInterface
 
 
 class CustomSimEnv(BaseSimEnv):

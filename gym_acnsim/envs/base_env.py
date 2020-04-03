@@ -9,7 +9,7 @@ from typing import Optional, Dict, List, Any, Tuple
 import gym
 import numpy as np
 
-from ...interface import GymTrainedInterface, GymTrainingInterface
+from ..interfaces import GymTrainedInterface, GymTrainingInterface
 
 
 class BaseSimEnv(gym.Env):

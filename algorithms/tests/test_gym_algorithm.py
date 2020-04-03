@@ -1,20 +1,17 @@
 # coding=utf-8
 """ Tests for the ACN-Sim gym algorithm and model wrapper. """
 import unittest
-from importlib.util import find_spec
 from unittest.mock import create_autospec, Mock, call
 
 import numpy as np
+from acnportal.acnsim import Interface, Simulator
+
+from gym_acnsim.envs import BaseSimEnv
+from gym_acnsim.interfaces import GymTrainedInterface, GymTrainingInterface
+from ..gym_algorithm import SimRLModelWrapper, GymBaseAlgorithm, \
+    GymTrainedAlgorithm
 
 
-if find_spec("gym") is not None:
-    from ...acnsim import Interface, GymTrainedInterface, \
-        GymTrainingInterface, Simulator
-    from ...acnsim.gym_acnsim.envs import BaseSimEnv
-    from .. import SimRLModelWrapper, GymBaseAlgorithm, GymTrainedAlgorithm
-
-
-@unittest.skipIf(find_spec("gym") is None, "Requires gym install.")
 class TestSimRLModelWrapper(unittest.TestCase):
     # noinspection PyMissingOrEmptyDocstring
     @classmethod
@@ -30,7 +27,6 @@ class TestSimRLModelWrapper(unittest.TestCase):
             self.model_wrapper.predict(*4*[None])
 
 
-@unittest.skipIf(find_spec("gym") is None, "Requires gym install.")
 class TestGymBaseAlgorithm(unittest.TestCase):
     # noinspection PyMissingOrEmptyDocstring
     def setUp(self) -> None:
@@ -69,7 +65,6 @@ class TestGymBaseAlgorithm(unittest.TestCase):
             self.algorithm.register_interface(training_interface)
 
 
-@unittest.skipIf(find_spec("gym") is None, "Requires gym install.")
 class TestGymTrainedAlgorithm(TestGymBaseAlgorithm):
     # noinspection PyMissingOrEmptyDocstring
     def setUp(self) -> None:
@@ -104,7 +99,7 @@ class TestGymTrainedAlgorithm(TestGymBaseAlgorithm):
         with self.assertRaises(TypeError):
             self.algorithm.schedule(None)
 
-    def test_schedule_error_no_interface(self):
+    def test_schedule_error_no_interface(self) -> None:
         self.algorithm.register_interface(self.interface)
         self.algorithm.register_env(self.env)
         self.algorithm.register_model(self.model)

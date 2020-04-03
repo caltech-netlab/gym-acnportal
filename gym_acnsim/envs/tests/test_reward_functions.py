@@ -3,21 +3,17 @@
 import unittest
 from typing import Callable, Dict, List
 from unittest.mock import create_autospec
-from importlib.util import find_spec
 
 import numpy as np
+from acnportal.acnsim import Simulator, ChargingNetwork, EVSE
+from acnportal.acnsim.network.sites import simple_acn
+from gym import spaces
 
-from ....network.sites import simple_acn
-from .... import Simulator, ChargingNetwork, EVSE
-
-if find_spec("gym") is not None:
-    from gym import spaces
-    from ..action_spaces import SimAction
-    from ....interface import GymTrainingInterface, GymTrainedInterface
-    from .. import reward_functions as rf, CustomSimEnv
+from ...interfaces import GymTrainingInterface, GymTrainedInterface
+from .. import reward_functions as rf, CustomSimEnv
+from ..action_spaces import SimAction
 
 
-@unittest.skipIf(find_spec("gym") is None, "Requires gym install.")
 class TestRewardFunction(unittest.TestCase):
     simulator: Simulator
 
@@ -48,7 +44,6 @@ class TestRewardFunction(unittest.TestCase):
         self.simulator.network.station_ids = ['TS-001', 'TS-002', 'TS-003']
 
 
-@unittest.skipIf(find_spec("gym") is None, "Requires gym install.")
 class TestEVSEViolation(TestRewardFunction):
     # noinspection PyMissingOrEmptyDocstring
     def setUp(self) -> None:

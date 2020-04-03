@@ -1,4 +1,16 @@
+# coding=utf-8
+"""
+Tests for Interfaces to Simulators used by gym_acnsim environments.
+"""
 import unittest
+from typing import Any, Dict, List
+from unittest.mock import create_autospec, Mock, patch
+
+import numpy as np
+from acnportal.acnsim import EV, EventQueue, FiniteRatesEVSE
+from acnportal.acnsim.tests.test_interface import TestInterface
+
+from ..interfaces import GymTrainedInterface, GymTrainingInterface
 
 
 class TestGymTrainedInterface(TestInterface):
@@ -92,6 +104,8 @@ class TestGymTrainedInterface(TestInterface):
             violation_tolerance=None,
             relative_tolerance=None
         )
+        # PyCharm inspector flags these references as nonexistent in
+        # type 'function' as PyCharm doesn't know these are Mocks.
         self.interface.is_feasible_evse.assert_called_once_with({})
 
     def test_last_energy_delivered(self) -> None:

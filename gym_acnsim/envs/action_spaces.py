@@ -27,7 +27,7 @@ import numpy as np
 from gym import Space
 from gym.spaces import Box
 
-from acnportal.acnsim.interface import GymTrainedInterface
+from ..interfaces import GymTrainedInterface
 
 
 class SimAction:

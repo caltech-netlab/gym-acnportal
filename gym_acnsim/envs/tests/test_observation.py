@@ -2,21 +2,17 @@
 """ Tests for SimObservation and observation generating functions. """
 import unittest
 from collections import namedtuple
-from importlib.util import find_spec
 from typing import Any, Callable, Optional
 from unittest.mock import create_autospec
 
 import numpy as np
-
 from acnportal.acnsim import EV
+from gym import Space
 
-if find_spec("gym") is not None:
-    from gym import Space
-    from .. import observation as obs
-from ....interface import GymTrainedInterface
+from .. import observation as obs
+from ...interfaces import GymTrainedInterface
 
 
-@unittest.skipIf(find_spec("gym") is None, "Requires gym install.")
 class TestSimObservation(unittest.TestCase):
     # noinspection PyMissingOrEmptyDocstring
     @classmethod
@@ -44,7 +40,6 @@ class TestSimObservation(unittest.TestCase):
                                 np.array([0, 0]))
 
 
-@unittest.skipIf(find_spec("gym") is None, "Requires gym install.")
 class TestEVObservationClass(unittest.TestCase):
     # noinspection PyMissingOrEmptyDocstring
     @classmethod
@@ -135,7 +130,6 @@ class TestDemandObservation(TestEVObservationClass):
                                           self.remaining_amp_periods2 + 1]))
 
 
-@unittest.skipIf(find_spec("gym") is None, "Requires gym install.")
 class TestConstraintObservation(unittest.TestCase):
     # Some class variables are defined outside of setUpClass so that
     # the code inspector knows that inherited classes have these
@@ -169,7 +163,6 @@ class TestConstraintObservation(unittest.TestCase):
         self.assertEqual(self.sim_observation.name, self.obs_name)
 
 
-@unittest.skipIf(find_spec("gym") is None, "Requires gym install.")
 class TestConstraintMatrixObservation(TestConstraintObservation):
     # noinspection PyMissingOrEmptyDocstring
     @classmethod
@@ -188,7 +181,6 @@ class TestConstraintMatrixObservation(TestConstraintObservation):
                                 self.constraint_matrix)
 
 
-@unittest.skipIf(find_spec("gym") is None, "Requires gym install.")
 class TestMagnitudesObservation(TestConstraintObservation):
     # noinspection PyMissingOrEmptyDocstring
     @classmethod
@@ -207,7 +199,6 @@ class TestMagnitudesObservation(TestConstraintObservation):
                                 self.magnitudes)
 
 
-@unittest.skipIf(find_spec("gym") is None, "Requires gym install.")
 class TestTimestepObservation(unittest.TestCase):
     # noinspection PyMissingOrEmptyDocstring
     @classmethod

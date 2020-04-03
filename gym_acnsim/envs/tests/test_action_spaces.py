@@ -1,17 +1,17 @@
 # coding=utf-8
 """ Tests for SimAction and action space functions. """
 import unittest
-from importlib.util import find_spec
 from typing import Callable, Dict, List, Any
 from unittest.mock import create_autospec
 
 import numpy as np
 from gym import Space
+
 from ..action_spaces import SimAction, single_charging_schedule, \
     zero_centered_single_charging_schedule
+from ...interfaces import GymTrainedInterface
 
 
-@unittest.skipIf(find_spec("gym") is None, "Requires gym install.")
 class TestSimAction(unittest.TestCase):
     # noinspection PyMissingOrEmptyDocstring
     @classmethod
@@ -41,7 +41,6 @@ class TestSimAction(unittest.TestCase):
                          {'a': [0]})
 
 
-@unittest.skipIf(find_spec("gym") is None, "Requires gym install.")
 class TestSingleChargingSchedule(unittest.TestCase):
     # Some class variables are defined outside of setUpClass so that
     # the code inspector knows that inherited classes have these
@@ -134,7 +133,6 @@ class TestSingleChargingSchedule(unittest.TestCase):
             )
 
 
-@unittest.skipIf(find_spec("gym") is None, "Requires gym install.")
 class TestZeroCenteredSingleChargingSchedule(TestSingleChargingSchedule):
     # noinspection PyMissingOrEmptyDocstring
     @classmethod

@@ -1,15 +1,50 @@
+# coding=utf-8
+"""
+This module extends the acnportal.acnsim Interface class with Interfaces
+that RL agents and gym environments use to obtain information about a
+Simulator.
+"""
+import warnings
+from copy import deepcopy
+from typing import List, Dict, Optional, Tuple
+
+import numpy as np
+
+from acnportal.acnsim import Interface
+
+
 class GymTrainedInterface(Interface):
     """ Interface between OpenAI Environments and the ACN Simulation
      Environment.
     """
 
+    # TODO (sunash): The return type of this should actually be the type
+    #  of cls.
     @classmethod
-    def from_interface(cls, interface):
+    def from_interface(cls, interface: Interface) -> "GymTrainedInterface":
+        """
+        Generates an instance of this class from an Interface-like
+        object. Note that the _simulator of the input interface is not
+        copied into the new GymTrainedInterface-like object generated
+        here, so changes from elsewhere to the _simulator will be
+        reflected in this object's _simulator.
+
+        Args:
+            interface (Interface):
+
+        Returns:
+            GymTrainedInterface:
+
+        """
+        # To make a new interface from an old one, we must access the
+        # old Interface's Simulator even if the _simulator attribute is
+        # protected.
+        # noinspection PyProtectedMember
         gym_interface = cls(interface._simulator)
         return gym_interface
 
     @property
-    def station_ids(self):
+    def station_ids(self) -> List[str]:
         """ Return a list of space ids of stations the in the network.
 
         Returns:
@@ -18,7 +53,7 @@ class GymTrainedInterface(Interface):
         return self._simulator.network.station_ids
 
     @property
-    def active_station_ids(self):
+    def active_station_ids(self) -> List[str]:
         """ Returns a list of active EVSE station ids for use by the
         algorithm.
 
@@ -29,7 +64,7 @@ class GymTrainedInterface(Interface):
         return self._simulator.network.active_station_ids
 
     @property
-    def is_done(self):
+    def is_done(self) -> bool:
         """ Returns if the simulation is complete (i.e. event queue is
         empty).
 
@@ -39,7 +74,7 @@ class GymTrainedInterface(Interface):
         return self._simulator.event_queue.empty()
 
     @property
-    def charging_rates(self):
+    def charging_rates(self) -> np.ndarray:
         """ Returns the charging_rates of the simulator at all times.
 
         Returns:
@@ -49,7 +84,7 @@ class GymTrainedInterface(Interface):
         """
         return deepcopy(self._simulator.charging_rates)
 
-    def is_feasible_evse(self, load_currents):
+    def is_feasible_evse(self, load_currents: Dict[str, List[float]]) -> bool:
         """
         Return if each EVSE in load_currents can accept the pilots
         assigned to it.
@@ -90,8 +125,10 @@ class GymTrainedInterface(Interface):
                 break
         return evse_satisfied
 
-    def is_feasible(self, load_currents, linear=False,
-                    violation_tolerance=None, relative_tolerance=None):
+    def is_feasible(self, load_currents: Dict[str, List[float]],
+                    linear: bool = False,
+                    violation_tolerance: Optional[float] = None,
+                    relative_tolerance: Optional[float] = None) -> bool:
         """ Overrides Interface.is_feasible with extra feasibility
         checks. These include:
 
@@ -112,17 +149,26 @@ class GymTrainedInterface(Interface):
 
         return constraints_satisfied and evse_satisfied
 
-    def last_energy_delivered(self):
+    def last_energy_delivered(self) -> float:
         """ Return the actual energy delivered in the last period, in
         amp-periods.
 
         Returns:
-            number: Total energy delivered in the last period, in
+            float: Total energy delivered in the last period, in
                 amp-periods.
         """
         return sum([ev.current_charging_rate for ev in self.active_evs])
 
-    def current_constraint_currents(self, input_schedule):
+    # TODO: Docs and typing for this function.
+    def current_constraint_currents(self, input_schedule: object) -> object:
+        """
+        TODO
+        Args:
+            input_schedule:
+
+        Returns:
+
+        """
         return abs(self._simulator.network.constraint_current(
             input_schedule, time_indices=[0]))
 
@@ -135,7 +181,8 @@ class GymTrainingInterface(GymTrainedInterface):
     to step the Simulator by a single iteration.
     """
 
-    def step(self, new_schedule, force_feasibility=True):
+    def step(self, new_schedule: Dict[str, List[float]],
+             force_feasibility: bool = True) -> Tuple[bool, bool]:
         """ Step the simulation using the input new_schedule until the
         simulator requires a new charging schedule. If the provided
         schedule is infeasible, steps the simulation only if
@@ -143,7 +190,7 @@ class GymTrainingInterface(GymTrainedInterface):
         simulation.
 
         Args:
-            new_schedule (Dict[str, List[number]]): Dictionary mapping
+            new_schedule (Dict[str, List[float]]): Dictionary mapping
             station ids to a schedule of pilot signals.
             force_feasibility (bool): If True, do not allow an
 
@@ -165,9 +212,10 @@ class GymTrainingInterface(GymTrainedInterface):
                 or len(list(new_schedule.values())[0])
                 < self._simulator.max_recompute):
             warnings.warn(
-                f"Length of schedules is less than this simulation's max_recompute "
-                f"parameter {self._simulator.max_recompute}. Pilots "
-                f"may be updated with zeros."
+                f"Length of schedules is less than this simulation's "
+                f"max_recompute parameter "
+                f"{self._simulator.max_recompute}. Pilots may be "
+                f"updated with zeros."
             )
 
         schedule_is_feasible = self.is_feasible(new_schedule)

@@ -24,7 +24,8 @@ import numpy as np
 from gym import spaces
 
 from acnportal.acnsim import EV
-from acnportal.acnsim.interface import GymTrainedInterface
+
+from ..interfaces import GymTrainedInterface
 
 
 class SimObservation:

@@ -1,21 +1,19 @@
 # coding=utf-8
 """ Tests for the base ACN-Sim gym environment. """
 import unittest
-from importlib.util import find_spec
 from typing import Dict, Callable
 from unittest.mock import create_autospec, Mock
 
 import numpy as np
-
-
+from acnportal.acnsim import Simulator
 from gym import Space
+
+from .. import BaseSimEnv, CustomSimEnv, RebuildingEnv
 from ..action_spaces import SimAction
 from ..observation import SimObservation
-from ....interface import GymTrainedInterface, GymTrainingInterface
-from .. import BaseSimEnv, CustomSimEnv, RebuildingEnv
+from ...interfaces import GymTrainingInterface, GymTrainedInterface
 
 
-@unittest.skipIf(find_spec("gym") is None, "Requires gym install.")
 class TestBaseSimEnv(unittest.TestCase):
     # noinspection PyMissingOrEmptyDocstring
     def setUp(self) -> None:
@@ -47,6 +45,8 @@ class TestBaseSimEnv(unittest.TestCase):
 
         self.env.update_state()
 
+        # PyCharm inspector flags these references as nonexistent in
+        # type 'function' as PyCharm doesn't know these are Mocks.
         self.env.observation_from_state.assert_called_once()
         self.env.reward_from_state.assert_called_once()
         self.env.done_from_state.assert_called_once()
@@ -84,6 +84,8 @@ class TestBaseSimEnv(unittest.TestCase):
         np.testing.assert_equal(self.env.action, np.array([1, 2]))
         self.assertEqual(self.env.schedule, dummy_schedule)
 
+        # PyCharm inspector flags these references as nonexistent in
+        # type 'function' as PyCharm doesn't know these are Mocks.
         self.env.store_previous_state.assert_called_once()
         self.training_interface.step.assert_called_with(dummy_schedule)
         self.env.update_state.assert_called_once()
@@ -111,7 +113,6 @@ class TestBaseSimEnv(unittest.TestCase):
         np.testing.assert_equal(observation, np.eye(2))
 
 
-@unittest.skipIf(find_spec("gym") is None, "Requires gym install.")
 class TestCustomSimEnv(TestBaseSimEnv):
     # noinspection PyMissingOrEmptyDocstring
     def setUp(self) -> None:
@@ -170,6 +171,8 @@ class TestCustomSimEnv(TestBaseSimEnv):
     def test_action_to_schedule(self) -> None:
         self.env.action = np.eye(2)
         self.out_schedule = self.env.action_to_schedule()
+        # PyCharm inspector flags these references as nonexistent in
+        # type 'function' as PyCharm doesn't know these are Mocks.
         interface, action = self.action_object.get_schedule.call_args[0]
         self.assertEqual(interface, self.training_interface)
         np.testing.assert_equal(action, np.eye(2))
@@ -185,7 +188,6 @@ class TestCustomSimEnv(TestBaseSimEnv):
         self.assertEqual(self.env.reward_from_state(), 42 + 1337)
 
 
-@unittest.skipIf(find_spec("gym") is None, "Requires gym install.")
 class TestRebuildingEnvNoGenFunc(TestCustomSimEnv):
     # noinspection PyMissingOrEmptyDocstring
     def setUp(self) -> None:
@@ -208,7 +210,6 @@ class TestRebuildingEnvNoGenFunc(TestCustomSimEnv):
             )
 
 
-@unittest.skipIf(find_spec("gym") is None, "Requires gym install.")
 class TestRebuildingEnv(TestCustomSimEnv):
     # noinspection PyMissingOrEmptyDocstring
     def setUp(self) -> None:

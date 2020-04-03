@@ -1,2 +1,2 @@
 # coding=utf-8
-""" Tests for gym_acnsim. """
+""" Tests for gym_acnsim environments. """
