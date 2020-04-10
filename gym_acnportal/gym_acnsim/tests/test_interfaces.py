@@ -156,7 +156,7 @@ class TestGymTrainingInterface(TestGymTrainedInterface):
         self.simulator.event_queue = event_queue
         return schedule
 
-    @patch("acnportal.acnsim.GymTrainingInterface.is_feasible",
+    @patch("gym_acnportal.gym_acnsim.GymTrainingInterface.is_feasible",
            return_value=False)
     def test_step_infeasible_schedule(self, mocked_is_feasible) -> None:
         schedule: Dict[str, List[float]] = self._step_helper()
@@ -165,7 +165,7 @@ class TestGymTrainingInterface(TestGymTrainedInterface):
         mocked_is_feasible.assert_called_once_with(schedule)
         self.simulator.step.assert_not_called()
 
-    @patch("acnportal.acnsim.GymTrainingInterface.is_feasible",
+    @patch("gym_acnportal.gym_acnsim.GymTrainingInterface.is_feasible",
            return_value=True)
     def test_step_feasible_schedule(self, mocked_is_feasible) -> None:
         schedule: Dict[str, List[float]] = self._step_helper()
@@ -174,7 +174,7 @@ class TestGymTrainingInterface(TestGymTrainedInterface):
         mocked_is_feasible.assert_called_once_with(schedule)
         self.simulator.step.assert_called_once_with(schedule)
 
-    @patch("acnportal.acnsim.GymTrainingInterface.is_feasible",
+    @patch("gym_acnportal.gym_acnsim.GymTrainingInterface.is_feasible",
            return_value=False)
     def test_step_infeasible_schedule_no_force_feasibility(
             self, mocked_is_feasible) -> None:

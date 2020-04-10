@@ -9,8 +9,9 @@ from typing import Optional, Dict, List, Any
 from acnportal.acnsim import Interface, EV
 from acnportal.algorithms import BaseAlgorithm
 
-from gym_acnsim.envs import BaseSimEnv
-from gym_acnsim.interfaces import GymTrainedInterface, GymTrainingInterface
+from gym_acnportal.gym_acnsim.envs import BaseSimEnv
+from gym_acnportal.gym_acnsim.interfaces import GymTrainedInterface, \
+    GymTrainingInterface
 
 
 class SimRLModelWrapper:
@@ -217,12 +218,12 @@ class GymTrainedAlgorithm(GymBaseAlgorithm):
         Implements BaseAlgorithm.schedule().
         """
         if self._model is None or self._env is None:
-            raise TypeError(
+            raise ValueError(
                 f"A model and environment must be set to call the "
                 f"schedule function for GymAlgorithm."
             )
         if not isinstance(self.env.interface, GymTrainedInterface):
-            raise TypeError(
+            raise ValueError(
                 "GymAlgorithm environment must have an interface of "
                 "type GymTrainedInterface to call schedule(). "
             )

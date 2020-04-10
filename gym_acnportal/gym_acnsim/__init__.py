@@ -9,7 +9,8 @@ from typing import List, Dict
 from gym.envs import registry
 from gym.envs.registration import register, EnvSpec
 
-from .envs import action_spaces, observation, reward_functions
+from .interfaces import Interface, GymTrainedInterface, GymTrainingInterface
+from .envs import *
 all_envs: List[EnvSpec] = list(registry.all())
 env_ids = [env_spec.id for env_spec in all_envs]
 gym_env_dict: Dict[str, str] = {
@@ -24,4 +25,4 @@ gym_env_dict: Dict[str, str] = {
 for env_name, env_entry_point in gym_env_dict.items():
     if env_name not in env_ids:
         register(id=env_name, entry_point=env_entry_point)
-del register, registry, all_envs, gym_env_dict
+del register, registry, all_envs, gym_env_dict, List, Dict

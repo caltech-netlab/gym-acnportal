@@ -6,8 +6,9 @@ from unittest.mock import create_autospec, Mock, call
 import numpy as np
 from acnportal.acnsim import Interface, Simulator
 
-from gym_acnsim.envs import BaseSimEnv
-from gym_acnsim.interfaces import GymTrainedInterface, GymTrainingInterface
+from gym_acnportal.gym_acnsim.envs import BaseSimEnv
+from gym_acnportal.gym_acnsim.interfaces import GymTrainedInterface, \
+    GymTrainingInterface
 from ..gym_algorithm import SimRLModelWrapper, GymBaseAlgorithm, \
     GymTrainedAlgorithm
 
@@ -90,22 +91,22 @@ class TestGymTrainedAlgorithm(TestGymBaseAlgorithm):
     def test_schedule_error_no_model(self) -> None:
         self.algorithm.register_interface(self.interface)
         self.algorithm.register_env(self.env)
-        with self.assertRaises(TypeError):
-            self.algorithm.schedule(None)
+        with self.assertRaises(ValueError):
+            self.algorithm.schedule([])
 
     def test_schedule_error_no_env(self) -> None:
         self.algorithm.register_interface(self.interface)
         self.algorithm.register_model(self.model)
-        with self.assertRaises(TypeError):
-            self.algorithm.schedule(None)
+        with self.assertRaises(ValueError):
+            self.algorithm.schedule([])
 
     def test_schedule_error_no_interface(self) -> None:
         self.algorithm.register_interface(self.interface)
         self.algorithm.register_env(self.env)
         self.algorithm.register_model(self.model)
         self.env.interface = None
-        with self.assertRaises(TypeError):
-            self.algorithm.schedule(None)
+        with self.assertRaises(ValueError):
+            self.algorithm.schedule([])
 
     def test_schedule(self) -> None:
         self.env.interface = None
