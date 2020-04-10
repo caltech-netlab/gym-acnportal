@@ -2,6 +2,8 @@
 """
 Setup for gym-acnportal.
 """
+# TODO: Once open-ai-prototyping is merged in and a new acnportal is
+#  released, we can just put acnportal in requirements.
 import setuptools
 with open("README.md") as fh:
     long_description = fh.read()
@@ -24,7 +26,8 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
-        'acnportal'
+        'acnportal @ git+https://github.com/zach401/acnportal'
+        '@open-ai-prototyping#egg=acnportal',
         'gym>=0.15.4',
         'numpy',
     ]
