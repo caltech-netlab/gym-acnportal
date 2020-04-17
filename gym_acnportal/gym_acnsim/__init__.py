@@ -8,8 +8,7 @@ from typing import List, Dict
 
 from gym.envs import registry
 from gym.envs.registration import register, EnvSpec
-
-from .interfaces import Interface, GymTrainedInterface, GymTrainingInterface
+from .interfaces import GymTrainedInterface, GymTrainingInterface
 from .envs import *
 all_envs: List[EnvSpec] = list(registry.all())
 env_ids = [env_spec.id for env_spec in all_envs]

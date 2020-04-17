@@ -19,6 +19,11 @@ class TestGymTrainedInterface(TestInterface):
         super().setUp()
         self.interface: GymTrainedInterface = \
             GymTrainedInterface.from_interface(self.interface)
+        # TODO (sunash): When the open AI integration branch is merged,
+        #  redefining the EVSEs is no longer necessary.
+        self.evse1 = self.network._EVSEs['PS-001']
+        self.evse2 = self.network._EVSEs['PS-002']
+        self.evse3 = self.network._EVSEs['PS-003']
 
     def test_station_ids(self) -> None:
         self.assertEqual(self.interface.station_ids,
