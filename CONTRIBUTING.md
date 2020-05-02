@@ -135,5 +135,7 @@ Some additinal miscellanious style guidelines:
 
 - More generally, if you're breaking a style convention, add a comment saying why.
 
+- Include inline comments, but focus your comments on __why__ your code needs to do what it does rather than what it does.
+
 Please consider contributing to other ongoing projects in the ACN Research Portal:
 https://github.com/zach401/acnportal
