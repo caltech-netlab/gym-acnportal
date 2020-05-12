@@ -1,3 +1,4 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/0cf36fc4b58048c794ebfdf9b878939c)](https://app.codacy.com/manual/Caltech_ACN/gym-acnportal?utm_source=github.com&utm_medium=referral&utm_content=sunash/gym-acnportal&utm_campaign=Badge_Grade_Dashboard)
 [![Build Status](https://travis-ci.org/sunash/gym-acnportal.svg?branch=master)](https://travis-ci.org/sunash/gym-acnportal)
 [![Documentation Status](https://readthedocs.org/projects/gym-acnportal/badge/?version=latest)](https://gym-acnportal.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/sunash/gym-acnportal/branch/master/graph/badge.svg)](https://codecov.io/gh/sunash/gym-acnportal)
