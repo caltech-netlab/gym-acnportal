@@ -52,6 +52,7 @@ class BaseSimEnv(gym.Env):
             execution of the environment is complete.
         _info (object): An object that gives info about the environment.
     """
+
     _interface: Optional[GymTrainedInterface]
     _init_snapshot: GymTrainedInterface
     _prev_interface: GymTrainedInterface
@@ -169,8 +170,9 @@ class BaseSimEnv(gym.Env):
         """
         self._prev_interface = self.interface
 
-    def step(self, action: np.ndarray
-             ) -> Tuple[np.ndarray, float, bool, Dict[Any, Any]]:
+    def step(
+        self, action: np.ndarray
+    ) -> Tuple[np.ndarray, float, bool, Dict[Any, Any]]:
         """ Step the simulation one timestep with an agent's action.
 
         Accepts an action and returns a tuple (observation, reward,
@@ -223,7 +225,7 @@ class BaseSimEnv(gym.Env):
         self._prev_interface = deepcopy(self._init_snapshot)
         return self.observation_from_state()
 
-    def render(self, mode='human'):
+    def render(self, mode="human"):
         """ Renders the environment. Implements gym.Env.render(). """
         raise NotImplementedError
 

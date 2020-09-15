@@ -102,33 +102,42 @@ class GymTrainedInterface(Interface):
             # network.
             if station_id not in self.station_ids:
                 raise KeyError(
-                    f'Station {station_id} in schedule but not found '
-                    f'in network.'
+                    f"Station {station_id} in schedule but not found " f"in network."
                 )
             # Check that none of the EVSE pilot signal limits are
             # violated.
-            evse_is_continuous, evse_allowable_pilots = \
-                self.allowable_pilot_signals(station_id)
+            evse_is_continuous, evse_allowable_pilots = self.allowable_pilot_signals(
+                station_id
+            )
             if evse_is_continuous:
                 min_rate = evse_allowable_pilots[0]
                 max_rate = evse_allowable_pilots[1]
-                evse_satisfied = np.all(np.array([
-                    (min_rate <= pilot <= max_rate) or pilot == 0
-                    for pilot in load_currents[station_id]
-                ]))
+                evse_satisfied = np.all(
+                    np.array(
+                        [
+                            (min_rate <= pilot <= max_rate) or pilot == 0
+                            for pilot in load_currents[station_id]
+                        ]
+                    )
+                )
             else:
-                evse_satisfied = np.all(np.isin(
-                    np.array(load_currents[station_id]),
-                    np.array(evse_allowable_pilots)
-                ))
+                evse_satisfied = np.all(
+                    np.isin(
+                        np.array(load_currents[station_id]),
+                        np.array(evse_allowable_pilots),
+                    )
+                )
             if not evse_satisfied:
                 break
         return evse_satisfied
 
-    def is_feasible(self, load_currents: Dict[str, List[float]],
-                    linear: bool = False,
-                    violation_tolerance: Optional[float] = None,
-                    relative_tolerance: Optional[float] = None) -> bool:
+    def is_feasible(
+        self,
+        load_currents: Dict[str, List[float]],
+        linear: bool = False,
+        violation_tolerance: Optional[float] = None,
+        relative_tolerance: Optional[float] = None,
+    ) -> bool:
         """ Overrides Interface.is_feasible with extra feasibility
         checks. These include:
 
@@ -142,7 +151,7 @@ class GymTrainedInterface(Interface):
             load_currents,
             linear=linear,
             violation_tolerance=violation_tolerance,
-            relative_tolerance=relative_tolerance
+            relative_tolerance=relative_tolerance,
         )
 
         evse_satisfied = self.is_feasible_evse(load_currents)
@@ -169,8 +178,9 @@ class GymTrainedInterface(Interface):
         Returns:
 
         """
-        return abs(self._simulator.network.constraint_current(
-            input_schedule, time_indices=[0]))
+        return abs(
+            self._simulator.network.constraint_current(input_schedule, time_indices=[0])
+        )
 
 
 class GymTrainingInterface(GymTrainedInterface):
@@ -181,8 +191,9 @@ class GymTrainingInterface(GymTrainedInterface):
     to step the Simulator by a single iteration.
     """
 
-    def step(self, new_schedule: Dict[str, List[float]],
-             force_feasibility: bool = True) -> Tuple[bool, bool]:
+    def step(
+        self, new_schedule: Dict[str, List[float]], force_feasibility: bool = True
+    ) -> Tuple[bool, bool]:
         """ Step the simulation using the input new_schedule until the
         simulator requires a new charging schedule. If the provided
         schedule is infeasible, steps the simulation only if
@@ -208,9 +219,10 @@ class GymTrainingInterface(GymTrainedInterface):
         """
         # Check that length of new schedules is not less than
         # max_recompute.
-        if (len(new_schedule) == 0
-                or len(list(new_schedule.values())[0])
-                < self._simulator.max_recompute):
+        if (
+            len(new_schedule) == 0
+            or len(list(new_schedule.values())[0]) < self._simulator.max_recompute
+        ):
             warnings.warn(
                 f"Length of schedules is less than this simulation's "
                 f"max_recompute parameter "

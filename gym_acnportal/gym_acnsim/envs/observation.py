@@ -63,14 +63,17 @@ class SimObservation:
             environment to distinguish between different types of
             observation.
     """
+
     _space_function: Callable[[GymTrainedInterface], spaces.Space]
     _obs_function: Callable[[GymTrainedInterface], np.ndarray]
     name: str
 
-    def __init__(self,
-                 space_function: Callable[[GymTrainedInterface], spaces.Space],
-                 obs_function: Callable[[GymTrainedInterface], np.ndarray],
-                 name: str) -> None:
+    def __init__(
+        self,
+        space_function: Callable[[GymTrainedInterface], spaces.Space],
+        obs_function: Callable[[GymTrainedInterface], np.ndarray],
+        name: str,
+    ) -> None:
         """
         Args:
             space_function (Callable[[GymInterface], spaces.Space]):
@@ -132,25 +135,21 @@ class SimObservation:
 # Per active EV observation factory functions. Note that all EV data
 # is shifted up by 1, as 0's indicate no EV is plugged in.
 def _ev_observation(
-        attribute_function: Callable[[GymTrainedInterface, EV], float],
-        name: str
+    attribute_function: Callable[[GymTrainedInterface, EV], float], name: str
 ) -> SimObservation:
     # noinspection PyMissingOrEmptyDocstring
     def space_function(interface: GymTrainedInterface) -> spaces.Space:
         return spaces.Box(
-            low=0, high=np.inf,
-            shape=(len(interface.station_ids),),
-            dtype='float'
+            low=0, high=np.inf, shape=(len(interface.station_ids),), dtype="float"
         )
 
     # noinspection PyMissingOrEmptyDocstring
     def obs_function(interface: GymTrainedInterface) -> np.ndarray:
-        attribute_values: dict = {station_id: 0
-                                  for station_id in interface.station_ids}
+        attribute_values: dict = {station_id: 0 for station_id in interface.station_ids}
         for ev in interface.active_evs:
-            attribute_values[ev.station_id] = attribute_function(
-                interface, ev) + 1
+            attribute_values[ev.station_id] = attribute_function(interface, ev) + 1
         return np.array(list(attribute_values.values()))
+
     return SimObservation(space_function, obs_function, name=name)
 
 
@@ -161,7 +160,7 @@ def arrival_observation() -> SimObservation:
     Zeros in the output observation array indicate no EV is plugged in;
     as such, all observations are shifted up by 1.
     """
-    return _ev_observation(lambda _, ev: ev.arrival, 'arrivals')
+    return _ev_observation(lambda _, ev: ev.arrival, "arrivals")
 
 
 def departure_observation() -> SimObservation:
@@ -171,7 +170,7 @@ def departure_observation() -> SimObservation:
     Zeros in the output observation array indicate no EV is plugged in;
     as such, all observations are shifted up by 1.
     """
-    return _ev_observation(lambda _, ev: ev.departure, 'departures')
+    return _ev_observation(lambda _, ev: ev.departure, "departures")
 
 
 def remaining_demand_observation() -> SimObservation:
@@ -182,7 +181,8 @@ def remaining_demand_observation() -> SimObservation:
     as such, all observations are shifted up by 1.
     """
     return _ev_observation(
-        lambda interface, ev: interface.remaining_amp_periods(ev), 'demands')
+        lambda interface, ev: interface.remaining_amp_periods(ev), "demands"
+    )
 
 
 # Network-wide observation factory functions.
@@ -193,12 +193,13 @@ def _constraints_observation(attribute: str, name: str) -> SimObservation:
             low=-np.inf,
             high=np.inf,
             shape=getattr(interface.get_constraints(), attribute).shape,
-            dtype='float'
+            dtype="float",
         )
 
     # noinspection PyMissingOrEmptyDocstring
     def obs_function(interface: GymTrainedInterface) -> np.ndarray:
         return getattr(interface.get_constraints(), attribute)
+
     return SimObservation(space_function, obs_function, name=name)
 
 
@@ -206,14 +207,14 @@ def constraint_matrix_observation() -> SimObservation:
     """ Generates a SimObservation instance that wraps functions to
     observe the network constraint matrix.
     """
-    return _constraints_observation('constraint_matrix', 'constraint matrix')
+    return _constraints_observation("constraint_matrix", "constraint matrix")
 
 
 def magnitudes_observation() -> SimObservation:
     """ Generates a SimObservation instance that wraps functions to
     observe the network limiting current magnitudes in amps.
     """
-    return _constraints_observation('magnitudes', 'magnitudes')
+    return _constraints_observation("magnitudes", "magnitudes")
 
 
 def timestep_observation() -> SimObservation:
@@ -228,9 +229,10 @@ def timestep_observation() -> SimObservation:
     # noinspection PyUnusedLocal
     # noinspection PyMissingOrEmptyDocstring
     def space_function(interface: GymTrainedInterface) -> spaces.Space:
-        return spaces.Box(low=0, high=np.inf, shape=(1,), dtype='float')
+        return spaces.Box(low=0, high=np.inf, shape=(1,), dtype="float")
 
     # noinspection PyMissingOrEmptyDocstring
     def obs_function(interface: GymTrainedInterface) -> np.ndarray:
         return np.array(interface.current_time + 1)
-    return SimObservation(space_function, obs_function, name='timestep')
+
+    return SimObservation(space_function, obs_function, name="timestep")

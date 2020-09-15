@@ -10,8 +10,10 @@ from acnportal.acnsim import Interface, EV
 from acnportal.algorithms import BaseAlgorithm
 
 from gym_acnportal.gym_acnsim.envs import BaseSimEnv
-from gym_acnportal.gym_acnsim.interfaces import GymTrainedInterface, \
-    GymTrainingInterface
+from gym_acnportal.gym_acnsim.interfaces import (
+    GymTrainedInterface,
+    GymTrainingInterface,
+)
 
 
 class SimRLModelWrapper:
@@ -19,6 +21,7 @@ class SimRLModelWrapper:
     agent for general use with ACN-Sim. Users should define a new
     class that implements the predict method.
     """
+
     model: object
 
     def __init__(self, model: object = None) -> None:
@@ -30,11 +33,13 @@ class SimRLModelWrapper:
         """
         self.model = model
 
-    def predict(self,
-                observation: object,
-                reward: float,
-                done: bool,
-                info: Dict[Any, Any] = None) -> np.ndarray:
+    def predict(
+        self,
+        observation: object,
+        reward: float,
+        done: bool,
+        info: Dict[Any, Any] = None,
+    ) -> np.ndarray:
         """
         Given an observation, reward, done, and info from an
         environment, return a prediction for the next optimal action
@@ -96,8 +101,7 @@ class GymBaseAlgorithm(BaseAlgorithm):
         self._env = None
         self.max_recompute = max_recompute
 
-    def __deepcopy__(self, memodict: Optional[Dict] = None
-                     ) -> "GymBaseAlgorithm":
+    def __deepcopy__(self, memodict: Optional[Dict] = None) -> "GymBaseAlgorithm":
         return type(self)(max_recompute=self.max_recompute)
 
     def register_interface(self, interface: Interface) -> None:
@@ -108,12 +112,15 @@ class GymBaseAlgorithm(BaseAlgorithm):
             # Note that in this case, the actual interface object is not
             # used by the algorithm; rather, a copy of interface of type
             # GymTrainedInterface is used.
-            gym_interface: GymTrainedInterface = \
-                GymTrainedInterface.from_interface(interface)
+            gym_interface: GymTrainedInterface = GymTrainedInterface.from_interface(
+                interface
+            )
         elif isinstance(interface, GymTrainingInterface):
-            raise TypeError("Interface GymTrainingInterface cannot be "
-                            "registered to a scheduler. Register "
-                            "GymTrainedInterface")
+            raise TypeError(
+                "Interface GymTrainingInterface cannot be "
+                "registered to a scheduler. Register "
+                "GymTrainedInterface"
+            )
         else:
             gym_interface: GymTrainedInterface = interface
         super().register_interface(gym_interface)
@@ -135,9 +142,9 @@ class GymBaseAlgorithm(BaseAlgorithm):
             return self._env
         else:
             raise ValueError(
-                'No env has been registered yet. Please call '
-                'register_env with an appropriate environment before '
-                'attempting to call env or schedule.'
+                "No env has been registered yet. Please call "
+                "register_env with an appropriate environment before "
+                "attempting to call env or schedule."
             )
 
     def register_env(self, env: BaseSimEnv) -> None:
@@ -170,6 +177,7 @@ class GymTrainedAlgorithm(GymBaseAlgorithm):
     Alternatively, one may call model.learn(vec_env), which instead will
     step through the simulation. See GymTrainingAlgorithm for this case.
     """
+
     _env: BaseSimEnv
     _model: Optional[SimRLModelWrapper]
 
@@ -193,9 +201,9 @@ class GymTrainedAlgorithm(GymBaseAlgorithm):
             return self._model
         else:
             raise ValueError(
-                'No model has been registered yet. Please call '
-                'register_model with an appropriate model before '
-                'attempting to call model or schedule.'
+                "No model has been registered yet. Please call "
+                "register_model with an appropriate model before "
+                "attempting to call model or schedule."
             )
 
     def register_model(self, model: SimRLModelWrapper) -> None:
@@ -230,8 +238,7 @@ class GymTrainedAlgorithm(GymBaseAlgorithm):
         self.env.update_state()
         self.env.store_previous_state()
         self.env.action = self.model.predict(
-            self.env.observation, self.env.reward,
-            self.env.done, self.env.info
+            self.env.observation, self.env.reward, self.env.done, self.env.info
         )
         self.env.schedule = self.env.action_to_schedule()
         return self.env.schedule

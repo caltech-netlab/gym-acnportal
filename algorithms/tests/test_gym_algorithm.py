@@ -7,10 +7,11 @@ import numpy as np
 from acnportal.acnsim import Interface, Simulator
 
 from gym_acnportal.gym_acnsim.envs import BaseSimEnv
-from gym_acnportal.gym_acnsim.interfaces import GymTrainedInterface, \
-    GymTrainingInterface
-from ..gym_algorithm import SimRLModelWrapper, GymBaseAlgorithm, \
-    GymTrainedAlgorithm
+from gym_acnportal.gym_acnsim.interfaces import (
+    GymTrainedInterface,
+    GymTrainingInterface,
+)
+from ..gym_algorithm import SimRLModelWrapper, GymBaseAlgorithm, GymTrainedAlgorithm
 
 
 class TestSimRLModelWrapper(unittest.TestCase):
@@ -25,7 +26,7 @@ class TestSimRLModelWrapper(unittest.TestCase):
 
     def test_predict_not_implemented_error(self) -> None:
         with self.assertRaises(NotImplementedError):
-            self.model_wrapper.predict(*4*[None])
+            self.model_wrapper.predict(*4 * [None])
 
 
 class TestGymBaseAlgorithm(unittest.TestCase):
@@ -117,39 +118,38 @@ class TestGymTrainedAlgorithm(TestGymBaseAlgorithm):
         self.env.observation = np.eye(2)
         self.env.reward = 3
         self.env.done = True
-        self.env.info = {'info': 'info'}
+        self.env.info = {"info": "info"}
 
         self.env.update_state = Mock()
         self.env.store_previous_state = Mock()
         self.model.predict = Mock(return_value=np.ones((2,)))
-        self.env.action_to_schedule = Mock(return_value={'PS-000': [0]})
+        self.env.action_to_schedule = Mock(return_value={"PS-000": [0]})
 
         # As order of calls is important here, we wrap all mocks in a
         # parent.
         mock_parent = Mock()
-        mock_parent.attach_mock(self.env.update_state, 'update_state')
-        mock_parent.attach_mock(self.env.store_previous_state,
-                                'store_previous_state')
-        mock_parent.attach_mock(self.model.predict, 'predict')
-        mock_parent.attach_mock(self.env.action_to_schedule,
-                                'action_to_schedule')
+        mock_parent.attach_mock(self.env.update_state, "update_state")
+        mock_parent.attach_mock(self.env.store_previous_state, "store_previous_state")
+        mock_parent.attach_mock(self.model.predict, "predict")
+        mock_parent.attach_mock(self.env.action_to_schedule, "action_to_schedule")
 
         return_schedule = self.algorithm.schedule([])
 
-        mock_parent.assert_has_calls([
-            call.update_state(),
-            call.store_previous_state(),
-            call.predict(self.env.observation,
-                         self.env.reward,
-                         self.env.done,
-                         self.env.info),
-            call.action_to_schedule()
-        ])
+        mock_parent.assert_has_calls(
+            [
+                call.update_state(),
+                call.store_previous_state(),
+                call.predict(
+                    self.env.observation, self.env.reward, self.env.done, self.env.info
+                ),
+                call.action_to_schedule(),
+            ]
+        )
 
         np.testing.assert_equal(self.env.action, np.ones((2,)))
-        self.assertEqual(self.env.schedule, {'PS-000': [0]})
-        self.assertEqual(return_schedule, {'PS-000': [0]})
+        self.assertEqual(self.env.schedule, {"PS-000": [0]})
+        self.assertEqual(return_schedule, {"PS-000": [0]})
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

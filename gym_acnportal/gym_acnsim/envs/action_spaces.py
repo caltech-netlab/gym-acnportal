@@ -69,16 +69,19 @@ class SimAction:
             environment to distinguish between different types of
             actions.
     """
+
     _space_function: Callable[[GymTrainedInterface], Space]
-    _to_schedule: Callable[[GymTrainedInterface, np.ndarray],
-                           Dict[str, List[float]]]
+    _to_schedule: Callable[[GymTrainedInterface, np.ndarray], Dict[str, List[float]]]
     name: str
 
-    def __init__(self,
-                 space_function: Callable[[GymTrainedInterface], Space],
-                 to_schedule: Callable[[GymTrainedInterface, np.ndarray],
-                                       Dict[str, List[float]]],
-                 name: str) -> None:
+    def __init__(
+        self,
+        space_function: Callable[[GymTrainedInterface], Space],
+        to_schedule: Callable[
+            [GymTrainedInterface, np.ndarray], Dict[str, List[float]]
+        ],
+        name: str,
+    ) -> None:
         """
         Args:
             space_function (Callable[[GymInterface], Space]):
@@ -119,8 +122,9 @@ class SimAction:
         """
         return self._space_function(interface)
 
-    def get_schedule(self, interface: GymTrainedInterface,
-                     action: np.ndarray) -> Dict[str, List[float]]:
+    def get_schedule(
+        self, interface: GymTrainedInterface, action: np.ndarray
+    ) -> Dict[str, List[float]]:
         """
         Returns an ACN-Sim schedule given an input action.
 
@@ -152,27 +156,36 @@ def single_charging_schedule() -> SimAction:
     # noinspection PyMissingOrEmptyDocstring
     def space_function(interface: GymTrainedInterface) -> Box:
         num_evses: int = len(interface.station_ids)
-        max_rate: float = max([interface.max_pilot_signal(station_id)
-                               for station_id in interface.station_ids])
-        min_rate: float = min(0.0, min(
-            [interface.min_pilot_signal(station_id)
-             for station_id in interface.station_ids]
-        ))
-        return Box(low=min_rate, high=max_rate,
-                   shape=(num_evses,), dtype='float')
+        max_rate: float = max(
+            [
+                interface.max_pilot_signal(station_id)
+                for station_id in interface.station_ids
+            ]
+        )
+        min_rate: float = min(
+            0.0,
+            min(
+                [
+                    interface.min_pilot_signal(station_id)
+                    for station_id in interface.station_ids
+                ]
+            ),
+        )
+        return Box(low=min_rate, high=max_rate, shape=(num_evses,), dtype="float")
 
     # noinspection PyMissingOrEmptyDocstring
-    def to_schedule(interface: GymTrainedInterface,
-                    action: np.ndarray) -> Dict[str, List[float]]:
+    def to_schedule(
+        interface: GymTrainedInterface, action: np.ndarray
+    ) -> Dict[str, List[float]]:
         if len(action.shape) > 1:
             raise TypeError(
                 f"Single schedule action type only accepts schedules "
                 f"of length <= 1 in a 1-D numpy array. Got shape = "
                 f"{len(action.shape)}."
             )
-        return {interface.station_ids[i]: [action[i]]
-                for i in range(len(action))}
-    return SimAction(space_function, to_schedule, 'single schedule')
+        return {interface.station_ids[i]: [action[i]] for i in range(len(action))}
+
+    return SimAction(space_function, to_schedule, "single schedule")
 
 
 def zero_centered_single_charging_schedule() -> SimAction:
@@ -192,22 +205,29 @@ def zero_centered_single_charging_schedule() -> SimAction:
     def space_function(interface: GymTrainedInterface) -> Box:
         num_evses: int = len(interface.station_ids)
         max_rates: np.ndarray = np.array(
-            [interface.max_pilot_signal(station_id)
-             for station_id in interface.station_ids]
+            [
+                interface.max_pilot_signal(station_id)
+                for station_id in interface.station_ids
+            ]
         )
         min_rates: np.ndarray = np.array(
-            [interface.min_pilot_signal(station_id)
-             for station_id in interface.station_ids]
+            [
+                interface.min_pilot_signal(station_id)
+                for station_id in interface.station_ids
+            ]
         )
         rate_offset_array: np.ndarray = (max_rates + min_rates) / 2
-        return Box(low=min(min(-rate_offset_array),
-                           min(min_rates - rate_offset_array)),
-                   high=max(max_rates - rate_offset_array),
-                   shape=(num_evses,), dtype='float')
+        return Box(
+            low=min(min(-rate_offset_array), min(min_rates - rate_offset_array)),
+            high=max(max_rates - rate_offset_array),
+            shape=(num_evses,),
+            dtype="float",
+        )
 
     # noinspection PyMissingOrEmptyDocstring
-    def to_schedule(interface: GymTrainedInterface,
-                    action: np.ndarray) -> Dict[str, List[float]]:
+    def to_schedule(
+        interface: GymTrainedInterface, action: np.ndarray
+    ) -> Dict[str, List[float]]:
         if len(action.shape) > 1:
             raise TypeError(
                 f"Single schedule action type only accepts schedules "
@@ -215,16 +235,22 @@ def zero_centered_single_charging_schedule() -> SimAction:
                 f"{len(action.shape)}."
             )
         max_rates: np.ndarray = np.array(
-            [interface.max_pilot_signal(station_id)
-             for station_id in interface.station_ids]
+            [
+                interface.max_pilot_signal(station_id)
+                for station_id in interface.station_ids
+            ]
         )
         min_rates: np.ndarray = np.array(
-            [interface.min_pilot_signal(station_id)
-             for station_id in interface.station_ids]
+            [
+                interface.min_pilot_signal(station_id)
+                for station_id in interface.station_ids
+            ]
         )
         rate_offset_array: np.ndarray = (max_rates + min_rates) / 2
         offset_action: np.ndarray = action + rate_offset_array
-        return {interface.station_ids[i]: [offset_action[i]]
-                for i in range(len(offset_action))}
-    return SimAction(space_function, to_schedule,
-                     'zero-centered single schedule')
+        return {
+            interface.station_ids[i]: [offset_action[i]]
+            for i in range(len(offset_action))
+        }
+
+    return SimAction(space_function, to_schedule, "zero-centered single schedule")
