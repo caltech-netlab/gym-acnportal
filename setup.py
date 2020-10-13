@@ -28,7 +28,7 @@ setuptools.setup(
     ],
     install_requires=[
         "acnportal @ git+https://github.com/zach401/acnportal"
-        "@open-ai-prototyping#egg=acnportal",
+        "@algorithm_pipelines#egg=acnportal",
         "gym>=0.15.4",
         "numpy",
     ],
