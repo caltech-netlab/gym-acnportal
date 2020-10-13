@@ -1,3 +1,4 @@
+# coding=utf-8
 """
 ACN-Sim Tutorial: Lesson X
 Training and Running a Reinforcement Learning Agent on ACN-Sim
@@ -6,7 +7,7 @@ Last updated: 02/27/2020
 
 It is strongly suggested that this tutorial is run in its own
 environment (e.g. conda or pyenv), as it will require dependencies
-not required by the rest of ACN-Portal.
+not required by the rest of gym-acnportal.
 
 In this lesson we will learn how to train a reinforcement learning (
 RL) agent and run it using OpenAI Gym environments that wrap ACN-Sim.
@@ -14,19 +15,18 @@ For this example we will be using the stable-baselines proximal
 policy optimization (PPO2) algorithm. As such, running this tutorial
 requires the stable-baselines package.
 
+Note: This tutorial uses stable_baselines: https://github.com/hill-a/stable-baselines
+for baseline algorithms. As of this writing, stable_baselines requires Tensorflow and
+Tensorflow gpu <2.0.0, >=1.8.0, so you may need to install in a new environment to
+run this tutorial.
+
 """
-
-# If running in a new environment, such as Google Colab, run this first.
-
-# !git clone https://github.com/zach401/acnportal.git
-# !pip install acnportal/.[gym]
-# !pip install stable-baselines
 
 import os
 import random
 from copy import deepcopy
 from datetime import datetime
-from typing import List, Callable, Optional, Dict
+from typing import List, Callable, Optional, Dict, Any
 
 import numpy as np
 import gym
@@ -38,19 +38,20 @@ from stable_baselines.common import BaseRLModel
 from stable_baselines.common.vec_env import DummyVecEnv
 
 from acnportal import acnsim
-from acnportal import algorithms
 from acnportal.acnsim import events, models, Simulator
-from acnportal.acnsim.gym_acnsim.envs.action_spaces import SimAction
-from acnportal.acnsim.gym_acnsim.envs import (
+
+from gym_acnportal.algorithms import SimRLModelWrapper, GymBaseAlgorithm
+from gym_acnportal.gym_acnsim.envs.action_spaces import SimAction
+from gym_acnportal.gym_acnsim.envs import (
     BaseSimEnv,
     reward_functions,
     CustomSimEnv,
     default_action_object,
     default_observation_objects,
 )
-from acnportal.acnsim.gym_acnsim.envs.observation import SimObservation
+from gym_acnportal.gym_acnsim.envs.observation import SimObservation
 from acnportal.acnsim.interface import GymTrainedInterface, Interface
-from acnportal.algorithms import SimRLModelWrapper, BaseAlgorithm
+from acnportal.algorithms import BaseAlgorithm
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
@@ -66,7 +67,7 @@ os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 # plugins for a single EVSE.
 def random_plugin(
     num, time_limit, evse, laxity_ratio=1 / 2, max_rate=32, voltage=208, period=1
-):
+) -> List[events.Event]:
     """ Returns a list of num random plugin events occurring anytime
     from time 0 to time_limit. Each plugin has a random arrival and
     departure under the time limit, and a satisfiable requested
@@ -153,7 +154,7 @@ def interface_generating_function() -> BaseAlgorithm:
     """
     # For training, this algorithm isn't run. So, we need not provide
     # any arguments.
-    schedule_rl = algorithms.GymTrainingAlgorithm()
+    schedule_rl: GymBaseAlgorithm = GymBaseAlgorithm()
 
     # Simulation to be wrapped
     _ = _random_sim_builder(schedule_rl)
@@ -231,11 +232,19 @@ class StableBaselinesRLModel(SimRLModelWrapper):
 
     model: BaseRLModel
 
-    def predict(self, observation, reward, done, info, **kwargs) -> np.ndarray:
+    def predict(
+        self,
+        observation: object,
+        reward: float,
+        done: bool,
+        info: Dict[Any, Any] = None,
+        **kwargs,
+    ) -> np.ndarray:
+        """ See SimRLModelWrapper.predict(). """
         return self.model.predict(observation, **kwargs)
 
 
-class GymTrainedAlgorithmVectorized(algorithms.BaseAlgorithm):
+class GymTrainedAlgorithmVectorized(BaseAlgorithm):
     """ Abstract algorithm class for Simulations using a
     reinforcement learning agent that operates in an Open AI Gym
     environment that is vectorized via stable-baselines VecEnv style
