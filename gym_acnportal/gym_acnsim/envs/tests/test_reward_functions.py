@@ -2,7 +2,7 @@
 """ Tests for reward functions. """
 import unittest
 from typing import Callable, Dict, List
-from unittest.mock import create_autospec
+from unittest.mock import create_autospec, Mock, patch
 
 import numpy as np
 from acnportal.acnsim import Simulator, ChargingNetwork, EVSE, Current, FiniteRatesEVSE
@@ -104,6 +104,8 @@ class TestUnpluggedEVViolation(TestRewardFunction):
     def setUp(self) -> None:
         super().setUp()
         self.env.schedule = {"TS-001": [8, 24], "TS-002": [6, 16]}
+        # Overwrite simulator network with a Mock
+        self.simulator.network = create_autospec(ChargingNetwork)
 
     def test_unplugged_ev_violation_empty_schedules(self) -> None:
         self.env.schedule = {"TS-001": [], "TS-002": []}

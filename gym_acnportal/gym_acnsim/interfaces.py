@@ -162,6 +162,8 @@ class GymTrainedInterface(Interface):
         """ Return the actual energy delivered in the last period, in
         amp-periods.
 
+        TODO: This is known to produce a warning in acnportal 0.2.2
+
         Returns:
             float: Total energy delivered in the last period, in
                 amp-periods.

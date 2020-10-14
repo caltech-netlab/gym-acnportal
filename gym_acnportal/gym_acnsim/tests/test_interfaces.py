@@ -7,7 +7,7 @@ from typing import Any, Dict, List
 from unittest.mock import create_autospec, Mock, patch
 
 import numpy as np
-from acnportal.acnsim import EV, EventQueue, FiniteRatesEVSE
+from acnportal.acnsim import EV, EventQueue, FiniteRatesEVSE, EVSE, DeadbandEVSE
 from acnportal.acnsim.tests.test_interface import TestInterface
 
 from ..interfaces import GymTrainedInterface, GymTrainingInterface
@@ -20,14 +20,14 @@ class TestGymTrainedInterface(TestInterface):
         self.interface: GymTrainedInterface = GymTrainedInterface.from_interface(
             self.interface
         )
-        # TODO (sunash): When the open AI integration branch is merged,
-        #  redefining the EVSEs is no longer necessary.
         self.evse1 = self.network._EVSEs["PS-001"]
         self.evse2 = self.network._EVSEs["PS-002"]
         self.evse3 = self.network._EVSEs["PS-003"]
 
     def test_station_ids(self) -> None:
-        self.assertEqual(self.interface.station_ids, ["PS-001", "PS-003", "PS-002"])
+        self.assertEqual(
+            self.interface.station_ids, ["PS-001", "PS-003", "PS-002", "PS-004"]
+        )
 
     def test_active_station_ids(self) -> None:
         # Auto-specs are of type Any as typing does not support Mocks.
@@ -55,9 +55,12 @@ class TestGymTrainedInterface(TestInterface):
             self.interface.is_feasible_evse({"PS-001": [1], "PS-000": [0]})
 
     def _continuous_evse_helper(self) -> None:
-        self.evse1._max_rate = 32
-        self.evse2._min_rate = 6
-        self.evse3._min_rate = 6
+        evse1 = EVSE("PS-001", max_rate=32)
+        self.network.register_evse(evse1, 120, -30)
+        evse2 = EVSE("PS-002", min_rate=6)
+        evse3 = DeadbandEVSE("PS-003")
+        self.network.register_evse(evse3, 360, 150)
+        self.network.register_evse(evse2, 240, 90)
 
     def test_is_feasible_evse_continuous_infeasible(self) -> None:
         self._continuous_evse_helper()
@@ -140,17 +143,6 @@ class TestGymTrainingInterface(TestGymTrainedInterface):
         self.simulator.step.return_value = True
         self.simulator.max_recompute = 2
 
-    def test_step_warning_no_schedules(self) -> None:
-        with self.assertWarns(UserWarning):
-            self.interface.step({})
-
-    def test_step_warning_short_schedule(self) -> None:
-        self.simulator.max_recompute = 4
-        with self.assertWarns(UserWarning):
-            self.interface.step(
-                {"PS-001": [34, 31], "PS-002": [4, 5], "PS-003": [0, 0]}
-            )
-
     def _step_helper(self) -> Dict[str, List[float]]:
         schedule: Dict[str, List[float]] = {
             "PS-001": [34, 31],
@@ -162,6 +154,16 @@ class TestGymTrainingInterface(TestGymTrainedInterface):
         event_queue.empty.return_value = True
         self.simulator.event_queue = event_queue
         return schedule
+
+    def test_step_warning_no_schedules(self) -> None:
+        with self.assertWarns(UserWarning):
+            self.interface.step({})
+
+    def test_step_warning_short_schedule(self) -> None:
+        schedule = self._step_helper()
+        self.simulator.max_recompute = 4
+        with self.assertWarns(UserWarning):
+            self.interface.step(schedule)
 
     @patch(
         "gym_acnportal.gym_acnsim.GymTrainingInterface.is_feasible", return_value=False

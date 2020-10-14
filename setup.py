@@ -27,8 +27,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
-        "acnportal @ git+https://github.com/zach401/acnportal"
-        "@algorithm_pipelines#egg=acnportal",
+        "acnportal @ git+https://github.com/zach401/acnportal" "@dev#egg=acnportal",
         "gym>=0.15.4",
         "numpy",
     ],
