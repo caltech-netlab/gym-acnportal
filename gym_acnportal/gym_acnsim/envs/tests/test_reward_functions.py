@@ -2,10 +2,10 @@
 """ Tests for reward functions. """
 import unittest
 from typing import Callable, Dict, List
-from unittest.mock import create_autospec
+from unittest.mock import create_autospec, Mock, patch
 
 import numpy as np
-from acnportal.acnsim import Simulator, ChargingNetwork, EVSE
+from acnportal.acnsim import Simulator, ChargingNetwork, EVSE, Current, FiniteRatesEVSE
 from acnportal.acnsim.network.sites import simple_acn
 from gym import spaces
 
@@ -38,8 +38,7 @@ class TestRewardFunction(unittest.TestCase):
             ),
             [],
         )
-        self.simulator.network = create_autospec(ChargingNetwork)
-        self.simulator.network.station_ids = ["TS-001", "TS-002", "TS-003"]
+        self.simulator.network = ChargingNetwork()
 
 
 class TestEVSEViolation(TestRewardFunction):
@@ -49,28 +48,25 @@ class TestEVSEViolation(TestRewardFunction):
 
     def test_evse_violation_key_error(self) -> None:
         self.env.schedule = {"TS-001": [0], "TS-002": [0]}
-        self.simulator.network.station_ids = ["TS-001"]
         with self.assertRaises(KeyError):
             _ = rf.evse_violation(self.env)
 
+    def _add_placeholder_constraint(self) -> None:
+        """ Adds a non-binding constraint to the network. Call this after registering
+        EVSEs."""
+        self.simulator.network.add_constraint(
+            Current(self.simulator.network.station_ids), float("inf")
+        )
+
     def _continuous_evse_helper(self) -> None:
-        self.evse1 = create_autospec(EVSE)
-        self.evse1.is_continuous = True
-        self.evse1.allowable_pilot_signals = [0, 32]
-
-        self.evse2 = create_autospec(EVSE)
-        self.evse2.is_continuous = True
-        self.evse2.allowable_pilot_signals = [6, 16]
-
-        self.evse3 = create_autospec(EVSE)
-        self.evse3.is_continuous = True
-        self.evse3.allowable_pilot_signals = [6, 32]
-
-        self.simulator.network._EVSEs = {
-            "TS-001": self.evse1,
-            "TS-002": self.evse2,
-            "TS-003": self.evse3,
-        }
+        self.simulator.network.register_evse(EVSE("TS-001", max_rate=32), 208, 0)
+        self.simulator.network.register_evse(
+            EVSE("TS-002", max_rate=16, min_rate=6), 208, 0
+        )
+        self.simulator.network.register_evse(
+            EVSE("TS-003", max_rate=32, min_rate=6), 208, 0
+        )
+        self._add_placeholder_constraint()
 
     def test_evse_violation_continuous_violation(self) -> None:
         self._continuous_evse_helper()
@@ -83,23 +79,14 @@ class TestEVSEViolation(TestRewardFunction):
         self.assertEqual(rf.evse_violation(self.env), 0)
 
     def _discrete_evse_helper(self) -> None:
-        self.evse1 = create_autospec(EVSE)
-        self.evse1.is_continuous = False
-        self.evse1.allowable_pilot_signals = [8, 16, 24, 32]
-
-        self.evse2 = create_autospec(EVSE)
-        self.evse2.is_continuous = False
-        self.evse2.allowable_pilot_signals = [6, 16]
-
-        self.evse3 = create_autospec(EVSE)
-        self.evse3.is_continuous = False
-        self.evse3.allowable_pilot_signals = list(range(1, 32))
-
-        self.simulator.network._EVSEs = {
-            "TS-001": self.evse1,
-            "TS-002": self.evse2,
-            "TS-003": self.evse3,
-        }
+        self.simulator.network.register_evse(
+            FiniteRatesEVSE("TS-001", [8, 16, 24, 32]), 208, 0
+        )
+        self.simulator.network.register_evse(FiniteRatesEVSE("TS-002", [6, 16]), 208, 0)
+        self.simulator.network.register_evse(
+            FiniteRatesEVSE("TS-003", list(range(1, 32))), 208, 0
+        )
+        self._add_placeholder_constraint()
 
     def test_evse_violation_non_continuous_violation(self) -> None:
         self._discrete_evse_helper()
@@ -117,6 +104,8 @@ class TestUnpluggedEVViolation(TestRewardFunction):
     def setUp(self) -> None:
         super().setUp()
         self.env.schedule = {"TS-001": [8, 24], "TS-002": [6, 16]}
+        # Overwrite simulator network with a Mock
+        self.simulator.network = create_autospec(ChargingNetwork)
 
     def test_unplugged_ev_violation_empty_schedules(self) -> None:
         self.env.schedule = {"TS-001": [], "TS-002": []}
