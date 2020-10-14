@@ -27,11 +27,11 @@ import random
 from copy import deepcopy
 from datetime import datetime
 from typing import List, Callable, Optional, Dict, Any
-
 import numpy as np
 import gym
 import pytz
 from gym.wrappers import FlattenObservation
+from gym_acnportal import GymTrainedInterface
 from matplotlib import pyplot as plt
 from stable_baselines import PPO2
 from stable_baselines.common import BaseRLModel
@@ -50,8 +50,7 @@ from gym_acnportal.gym_acnsim.envs import (
     default_observation_objects,
 )
 from gym_acnportal.gym_acnsim.envs.observation import SimObservation
-from acnportal.acnsim.interface import GymTrainedInterface, Interface
-from acnportal.algorithms import BaseAlgorithm
+from acnportal.algorithms import BaseAlgorithm, Interface
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
