@@ -83,6 +83,12 @@ class CustomSimEnv(BaseSimEnv):
 
     @property
     def interface(self) -> GymTrainedInterface:
+        """
+        Get the current Interface of the environment.
+
+        Returns:
+            GymTrainedInterface: The current Interface of the environment.
+        """
         return self._interface
 
     @interface.setter
