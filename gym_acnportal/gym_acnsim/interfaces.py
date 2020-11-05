@@ -226,7 +226,7 @@ class GymTrainingInterface(GymTrainedInterface):
         #  this warning.
         if len(new_schedule) == 0 or (
             self._simulator.max_recompute is not None
-            and (list(new_schedule.values())[0]) < self._simulator.max_recompute
+            and len(list(new_schedule.values())[0]) < self._simulator.max_recompute
         ):
             warnings.warn(
                 f"Length of schedules is less than this simulation's "
