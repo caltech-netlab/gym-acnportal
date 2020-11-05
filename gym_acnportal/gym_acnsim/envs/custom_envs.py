@@ -174,9 +174,8 @@ default_observation_objects: List[SimObservation] = [
 default_action_object: SimAction = zero_centered_single_charging_schedule()
 default_reward_functions: List[Callable[[BaseSimEnv], float]] = [
     rf.evse_violation,
-    rf.unplugged_ev_violation,
     rf.current_constraint_violation,
-    rf.hard_charging_reward,
+    rf.soft_charging_reward,
 ]
 
 
