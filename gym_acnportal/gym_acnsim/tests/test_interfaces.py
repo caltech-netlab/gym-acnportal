@@ -33,10 +33,12 @@ class TestGymTrainedInterface(TestInterface):
         # Auto-specs are of type Any as typing does not support Mocks.
         ev1: Any = create_autospec(EV)
         ev2: Any = create_autospec(EV)
+        ev1.station_id = "PS-001"
+        ev2.station_id = "PS-002"
         ev1.fully_charged = True
         ev2.fully_charged = False
-        self.network.plugin(ev1, "PS-001")
-        self.network.plugin(ev2, "PS-002")
+        self.network.plugin(ev1)
+        self.network.plugin(ev2)
         self.assertEqual(self.interface.active_station_ids, ["PS-002"])
 
     def test_is_done(self) -> None:
