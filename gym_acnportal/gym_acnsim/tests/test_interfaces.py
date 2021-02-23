@@ -3,7 +3,7 @@
 Tests for Interfaces to Simulators used by gym_acnsim environments.
 """
 import unittest
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Callable
 from unittest.mock import create_autospec, Mock, patch
 
 import numpy as np
@@ -35,8 +35,10 @@ class TestGymTrainedInterface(TestInterface):
         ev2: Any = create_autospec(EV)
         ev1.fully_charged = True
         ev2.fully_charged = False
-        self.network.plugin(ev1, "PS-001")
-        self.network.plugin(ev2, "PS-002")
+        ev1.station_id = "PS-001"
+        ev2.station_id = "PS-002"
+        self.network.plugin(ev1)
+        self.network.plugin(ev2)
         self.assertEqual(self.interface.active_station_ids, ["PS-002"])
 
     def test_is_done(self) -> None:
@@ -54,36 +56,53 @@ class TestGymTrainedInterface(TestInterface):
         with self.assertRaises(KeyError):
             self.interface.is_feasible_evse({"PS-001": [1], "PS-000": [0]})
 
+    def _open_evse_registration(func: Callable) -> Callable:
+        """Temporarily removes constraints so new EVSEs can be registered."""
+        def _inner_open_evse_registration(self: "TestGymTrainedInterface"):
+            self.network.constraint_matrix = None
+            self.network.magnitudes = np.array([])
+            self.network.constraint_index = []
+            func(self)
+            self.network.constraint_matrix = np.eye(len(self.network._EVSEs))
+            self.network.magnitudes = np.ones((len(self.network._EVSEs), 1))
+            self.network.constraint_index = [
+                f"C{i+1}" for i in range(len(self.network._EVSEs))
+            ]
+
+        return _inner_open_evse_registration
+
+    @_open_evse_registration
     def _continuous_evse_helper(self) -> None:
-        evse1 = EVSE("PS-001", max_rate=32)
+        evse1 = EVSE("PS-001-ub", max_rate=32)
         self.network.register_evse(evse1, 120, -30)
-        evse2 = EVSE("PS-002", min_rate=6)
-        evse3 = DeadbandEVSE("PS-003")
+        evse2 = EVSE("PS-002-lb", min_rate=6)
+        evse3 = DeadbandEVSE("PS-003-db")
         self.network.register_evse(evse3, 360, 150)
         self.network.register_evse(evse2, 240, 90)
 
     def test_is_feasible_evse_continuous_infeasible(self) -> None:
         self._continuous_evse_helper()
         schedule: Dict[str, List[float]] = {
-            "PS-001": [34, 31],
-            "PS-002": [4, 5],
-            "PS-003": [0, 0],
+            "PS-001-ub": [34, 31],
+            "PS-002-lb": [4, 5],
+            "PS-003-db": [0, 0],
         }
         self.assertFalse(self.interface.is_feasible_evse(schedule))
 
     def test_is_feasible_evse_continuous_feasible(self) -> None:
         self._continuous_evse_helper()
         schedule: Dict[str, List[float]] = {
-            "PS-001": [31, 16],
-            "PS-002": [7, 16],
-            "PS-003": [0, 0],
+            "PS-001-ub": [31, 16],
+            "PS-002-lb": [7, 16],
+            "PS-003-db": [0, 0],
         }
         self.assertTrue(self.interface.is_feasible_evse(schedule))
 
+    @_open_evse_registration
     def _discrete_evse_helper(self) -> None:
-        self.evse1: FiniteRatesEVSE = FiniteRatesEVSE("PS-001", [8, 16, 24, 32])
-        self.evse2: FiniteRatesEVSE = FiniteRatesEVSE("PS-002", [6, 16])
-        self.evse3: FiniteRatesEVSE = FiniteRatesEVSE("PS-003", list(range(1, 32)))
+        self.evse1: FiniteRatesEVSE = FiniteRatesEVSE("PS-001-fr", [8, 16, 24, 32])
+        self.evse2: FiniteRatesEVSE = FiniteRatesEVSE("PS-002-fr", [6, 16])
+        self.evse3: FiniteRatesEVSE = FiniteRatesEVSE("PS-003-fr", list(range(1, 32)))
         self.network.register_evse(self.evse1, 120, -30)
         self.network.register_evse(self.evse3, 360, 150)
         self.network.register_evse(self.evse2, 240, 90)
@@ -91,17 +110,18 @@ class TestGymTrainedInterface(TestInterface):
     def test_is_feasible_evse_discrete_infeasible(self) -> None:
         self._discrete_evse_helper()
         schedule: Dict[str, List[float]] = {
-            "PS-001": [4, 19],
-            "PS-002": [8, 18],
-            "PS-003": [0, 0],
+            "PS-001-fr": [4, 19],
+            "PS-002-fr": [8, 18],
+            "PS-003-fr": [0, 0],
         }
         self.assertFalse(self.interface.is_feasible_evse(schedule))
 
     def test_is_feasible_evse_discrete_feasible(self) -> None:
+        self._discrete_evse_helper()
         schedule: Dict[str, List[float]] = {
-            "PS-001": [8, 24],
-            "PS-002": [6, 16],
-            "PS-003": [0, 0],
+            "PS-001-fr": [8, 24],
+            "PS-002-fr": [6, 16],
+            "PS-003-fr": [0, 0],
         }
         self.assertTrue(self.interface.is_feasible_evse(schedule))
 

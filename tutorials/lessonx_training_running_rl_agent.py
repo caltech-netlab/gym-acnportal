@@ -31,6 +31,9 @@ from typing import List, Callable, Optional, Dict, Any
 import numpy as np
 import gym
 import pytz
+from acnportal.acnsim.interface import SessionInfo
+
+from acnportal.algorithms import BaseAlgorithm
 from gym.wrappers import FlattenObservation
 from matplotlib import pyplot as plt
 from stable_baselines import PPO2
@@ -38,8 +41,9 @@ from stable_baselines.common import BaseRLModel
 from stable_baselines.common.vec_env import DummyVecEnv
 
 from acnportal import acnsim
-from acnportal.acnsim import events, models, Simulator
+from acnportal.acnsim import events, models, Simulator, Interface
 
+from gym_acnportal import GymTrainedInterface
 from gym_acnportal.algorithms import SimRLModelWrapper, GymBaseAlgorithm
 from gym_acnportal.gym_acnsim.envs.action_spaces import SimAction
 from gym_acnportal.gym_acnsim.envs import (
@@ -50,8 +54,6 @@ from gym_acnportal.gym_acnsim.envs import (
     default_observation_objects,
 )
 from gym_acnportal.gym_acnsim.envs.observation import SimObservation
-from acnportal.acnsim.interface import GymTrainedInterface, Interface
-from acnportal.algorithms import BaseAlgorithm
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
@@ -353,7 +355,7 @@ class GymTrainedAlgorithmVectorized(BaseAlgorithm):
         """
         self._model = new_model
 
-    def schedule(self, active_evs) -> Dict[str, List[float]]:
+    def schedule(self, active_sessions: List[SessionInfo]) -> Dict[str, List[float]]:
         """ Creates a schedule of charging rates for each EVSE in the
         network. This only works if a model and environment have been
         registered.

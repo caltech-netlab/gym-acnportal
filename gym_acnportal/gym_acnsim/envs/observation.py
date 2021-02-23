@@ -21,9 +21,8 @@ returned by space_function.
 from typing import Callable
 
 import numpy as np
+from acnportal.acnsim.interface import SessionInfo
 from gym import spaces
-
-from acnportal.acnsim import EV
 
 from ..interfaces import GymTrainedInterface
 
@@ -135,7 +134,7 @@ class SimObservation:
 # Per active EV observation factory functions. Note that all EV data
 # is shifted up by 1, as 0's indicate no EV is plugged in.
 def _ev_observation(
-    attribute_function: Callable[[GymTrainedInterface, EV], float], name: str
+    attribute_function: Callable[[GymTrainedInterface, SessionInfo], float], name: str
 ) -> SimObservation:
     # noinspection PyMissingOrEmptyDocstring
     def space_function(interface: GymTrainedInterface) -> spaces.Space:
@@ -146,7 +145,7 @@ def _ev_observation(
     # noinspection PyMissingOrEmptyDocstring
     def obs_function(interface: GymTrainedInterface) -> np.ndarray:
         attribute_values: dict = {station_id: 0 for station_id in interface.station_ids}
-        for ev in interface.active_evs:
+        for ev in interface.active_sessions():
             attribute_values[ev.station_id] = attribute_function(interface, ev) + 1
         return np.array(list(attribute_values.values()))
 

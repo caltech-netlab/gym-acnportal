@@ -14,6 +14,8 @@ import unittest
 
 import numpy as np
 import pytz
+from acnportal.acnsim.interface import SessionInfo
+
 from acnportal import acnsim
 from acnportal.acnsim import EV, sites, acndata_events, Simulator
 from acnportal.algorithms import BaseAlgorithm
@@ -37,7 +39,7 @@ class EarliestDeadlineFirstAlgoStateful(BaseAlgorithm):
         self.polled_charging_rates = {}
         self.max_recompute = 1
 
-    def schedule(self, active_evs: List[EV]) -> Dict[str, List[float]]:
+    def schedule(self, active_sessions: List[SessionInfo]) -> Dict[str, List[float]]:
         """ Schedule EVs by first sorting them by departure time, then
         allocating them their maximum feasible rate.
 
@@ -49,14 +51,14 @@ class EarliestDeadlineFirstAlgoStateful(BaseAlgorithm):
         every 100 timesteps.
 
         Args:
-            active_evs (List[EV]): see BaseAlgorithm
+            active_sessions (List[SessionInfo]): see BaseAlgorithm
 
         Returns:
             Dict[str, List[float]]: see BaseAlgorithm
         """
-        schedule = {ev.station_id: [0] for ev in active_evs}
+        schedule = {ev.station_id: [0] for ev in active_sessions}
 
-        sorted_evs = sorted(active_evs, key=lambda x: x.departure)
+        sorted_evs = sorted(active_sessions, key=lambda x: x.departure)
 
         for ev in sorted_evs:
             schedule[ev.station_id] = [self.interface.max_pilot_signal(ev.station_id)]

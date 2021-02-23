@@ -168,7 +168,7 @@ class GymTrainedInterface(Interface):
             float: Total energy delivered in the last period, in
                 amp-periods.
         """
-        return sum([ev.current_charging_rate for ev in self.active_evs])
+        return sum([ev.current_charging_rate for ev in self._active_evs])
 
     # TODO: Docs and typing for this function.
     def current_constraint_currents(self, input_schedule: object) -> object:
