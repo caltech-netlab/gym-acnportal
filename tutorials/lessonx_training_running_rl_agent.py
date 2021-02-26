@@ -43,7 +43,7 @@ from stable_baselines.common.vec_env import DummyVecEnv
 from acnportal import acnsim
 from acnportal.acnsim import events, models, Simulator, Interface
 
-from gym_acnportal import GymTrainedInterface
+from gym_acnportal import GymTrainedInterface, GymTrainingInterface
 from gym_acnportal.algorithms import SimRLModelWrapper, GymBaseAlgorithm
 from gym_acnportal.gym_acnsim.envs.action_spaces import SimAction
 from gym_acnportal.gym_acnsim.envs import (
@@ -126,7 +126,7 @@ def random_plugin(
 # completely rebuild the simulation each time the environment is
 # reset, so that the next simulation has a new event queue. As such,
 # we will define a simulation generating function.
-def _random_sim_builder(algorithm: BaseAlgorithm) -> Simulator:
+def _random_sim_builder(iface_type=GymTrainingInterface) -> Simulator:
     timezone = pytz.timezone("America/Los_Angeles")
     start = timezone.localize(datetime(2018, 9, 5))
     period = 1
@@ -141,26 +141,24 @@ def _random_sim_builder(algorithm: BaseAlgorithm) -> Simulator:
     # Simulation to be wrapped
     return acnsim.Simulator(
         deepcopy(cn),
-        algorithm,
+        None,
         deepcopy(event_queue),
         start,
         period=period,
         verbose=False,
+        interface_type=iface_type
     )
 
 
-def interface_generating_function() -> BaseAlgorithm:
+def interface_generating_function(iface_type=GymTrainingInterface) -> Interface:
     """
     Initializes a simulation with random events on a 1 phase, 1
     constraint ACN (simple_acn), with 1 EVSE
     """
-    # For training, this algorithm isn't run. So, we need not provide
-    # any arguments.
-    schedule_rl: GymBaseAlgorithm = GymBaseAlgorithm()
-
     # Simulation to be wrapped
-    _ = _random_sim_builder(schedule_rl)
-    return schedule_rl.interface
+    sim = _random_sim_builder(iface_type=iface_type)
+    iface = iface_type(sim)
+    return iface
 
 
 # ACN-Sim gym environments wrap an interface to an ACN-Sim
@@ -216,13 +214,13 @@ vec_env = DummyVecEnv(
 model = PPO2("MlpPolicy", vec_env, verbose=2)
 num_iterations: int = int(1e3)
 model_name: str = f"PPO2_{num_iterations}_test_{'today'}.zip"
-# model.learn(num_iterations)
+model.learn(num_iterations)
 # model.save(model_name)
 
 # We've trained the above model for 10000 iterations. Packaged with this
 # library is the same model trained for 1000000 iterations, which we
 # will now load
-model.load(model_name)
+# model.load(model_name)
 
 
 # This is a stable_baselines PPO2 model. PPO2 requires vectorized
@@ -388,7 +386,8 @@ class GymTrainedAlgorithmVectorized(BaseAlgorithm):
 
 
 evaluation_algorithm = GymTrainedAlgorithmVectorized()
-evaluation_simulation = _random_sim_builder(evaluation_algorithm)
+evaluation_simulation = _random_sim_builder()
+evaluation_simulation.update_scheduler(evaluation_algorithm)
 
 # Make a new, single-use environment with only charging rewards.
 observation_objects: List[SimObservation] = default_observation_objects
@@ -414,4 +413,5 @@ evaluation_algorithm.register_model(StableBaselinesRLModel(model))
 evaluation_simulation.run()
 
 plt.plot(acnsim.aggregate_current(evaluation_simulation))
+print("here")
 plt.show()

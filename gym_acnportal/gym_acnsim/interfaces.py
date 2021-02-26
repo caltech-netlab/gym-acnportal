@@ -223,6 +223,7 @@ class GymTrainingInterface(GymTrainedInterface):
         # max_recompute.
         if (
             len(new_schedule) == 0
+            or self._simulator.max_recompute is None
             or len(list(new_schedule.values())[0]) < self._simulator.max_recompute
         ):
             warnings.warn(
