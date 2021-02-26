@@ -10,7 +10,8 @@ import numpy as np
 from acnportal.acnsim import EV, EventQueue, FiniteRatesEVSE, EVSE, DeadbandEVSE
 from acnportal.acnsim.tests.test_interface import TestInterface
 
-from ..interfaces import GymTrainedInterface, GymTrainingInterface
+from gym_acnportal.gym_acnsim.interfaces import GymTrainedInterface, \
+    GymTrainingInterface
 
 
 class TestGymTrainedInterface(TestInterface):
@@ -125,6 +126,7 @@ class TestGymTrainedInterface(TestInterface):
         }
         self.assertTrue(self.interface.is_feasible_evse(schedule))
 
+    # TODO: Clarify why is_feasible is patched here and at other points.
     @patch("acnportal.acnsim.Interface.is_feasible", return_value=True)
     def test_is_feasible(self, mocked_is_feasible) -> None:
         self.interface.is_feasible_evse = Mock()
@@ -185,6 +187,7 @@ class TestGymTrainingInterface(TestGymTrainedInterface):
         with self.assertWarns(UserWarning):
             self.interface.step(schedule)
 
+    # TODO: Should Interface.is_feasible be patched instead?
     @patch(
         "gym_acnportal.gym_acnsim.GymTrainingInterface.is_feasible", return_value=False
     )
