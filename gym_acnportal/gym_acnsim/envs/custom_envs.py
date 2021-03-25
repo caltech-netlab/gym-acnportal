@@ -175,6 +175,7 @@ default_observation_objects: List[SimObservation] = [
     obs.remaining_demand_observation(),
     obs.constraint_matrix_observation(),
     obs.magnitudes_observation(),
+    obs.phases_observation(),
     obs.timestep_observation(),
 ]
 default_action_object: SimAction = zero_centered_single_charging_schedule()

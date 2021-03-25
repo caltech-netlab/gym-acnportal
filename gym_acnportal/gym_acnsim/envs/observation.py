@@ -217,6 +217,26 @@ def magnitudes_observation() -> SimObservation:
     return _constraints_observation("magnitudes", "magnitudes")
 
 
+def phases_observation() -> SimObservation:
+    """ Generates a SimObservation instance that wraps functions to
+    observe the network phases.
+    """
+    # noinspection PyMissingOrEmptyDocstring
+    def space_function(interface: GymTrainedInterface) -> spaces.Space:
+        return spaces.Box(
+            low=-np.inf,
+            high=np.inf,
+            shape=interface.infrastructure_info().phases.shape,
+            dtype="float",
+        )
+
+    # noinspection PyMissingOrEmptyDocstring
+    def obs_function(interface: GymTrainedInterface) -> np.ndarray:
+        return interface.infrastructure_info().phases
+
+    return SimObservation(space_function, obs_function, name="phases")
+
+
 def timestep_observation() -> SimObservation:
     """ Generates a SimObservation instance that wraps functions to
     observe the current timestep of the simulation, in periods.
