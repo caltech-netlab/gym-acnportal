@@ -413,5 +413,4 @@ evaluation_algorithm.register_model(StableBaselinesRLModel(model))
 evaluation_simulation.run()
 
 plt.plot(acnsim.aggregate_current(evaluation_simulation))
-print("here")
 plt.show()
