@@ -27,7 +27,6 @@ import random
 from copy import deepcopy
 from datetime import datetime
 from typing import List, Callable, Optional, Dict, Any
-
 import numpy as np
 import gym
 import pytz
@@ -35,6 +34,7 @@ from acnportal.acnsim.interface import SessionInfo
 
 from acnportal.algorithms import BaseAlgorithm
 from gym.wrappers import FlattenObservation
+from gym_acnportal import GymTrainedInterface, GymTrainingInterface
 from matplotlib import pyplot as plt
 from stable_baselines import PPO2
 from stable_baselines.common import BaseRLModel
@@ -54,6 +54,14 @@ from gym_acnportal.gym_acnsim.envs import (
     default_observation_objects,
 )
 from gym_acnportal.gym_acnsim.envs.observation import SimObservation
+from acnportal.algorithms import (
+    BaseAlgorithm,
+    Interface,
+    SortedSchedulingAlgo,
+    earliest_deadline_first,
+    first_come_first_served,
+    RoundRobin,
+)
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
@@ -126,13 +134,17 @@ def random_plugin(
 # completely rebuild the simulation each time the environment is
 # reset, so that the next simulation has a new event queue. As such,
 # we will define a simulation generating function.
-def _random_sim_builder(iface_type=GymTrainingInterface) -> Simulator:
+def _random_sim_builder(
+    algorithm: Optional[BaseAlgorithm], interface_type: type
+) -> Simulator:
     timezone = pytz.timezone("America/Los_Angeles")
     start = timezone.localize(datetime(2018, 9, 5))
     period = 1
 
     # Make random event queue
-    cn = acnsim.sites.simple_acn(["EVSE-001"], aggregate_cap=20 * 208 / 1000)
+    cn = acnsim.sites.simple_acn(
+        ["EVSE-001", "EVSE-002"], aggregate_cap=32 * 208 / 1000
+    )
     event_list = []
     for station_id in cn.station_ids:
         event_list.extend(random_plugin(10, 100, station_id))
@@ -141,12 +153,12 @@ def _random_sim_builder(iface_type=GymTrainingInterface) -> Simulator:
     # Simulation to be wrapped
     return acnsim.Simulator(
         deepcopy(cn),
-        None,
+        algorithm,
         deepcopy(event_queue),
         start,
         period=period,
         verbose=False,
-        interface_type=iface_type
+        interface_type=interface_type,
     )
 
 
@@ -155,8 +167,9 @@ def interface_generating_function(iface_type=GymTrainingInterface) -> Interface:
     Initializes a simulation with random events on a 1 phase, 1
     constraint ACN (simple_acn), with 1 EVSE
     """
+    schedule_rl = None
     # Simulation to be wrapped
-    sim = _random_sim_builder(iface_type=iface_type)
+    sim = _random_sim_builder(schedule_rl, iface_type=iface_type)
     iface = iface_type(sim)
     return iface
 
@@ -212,8 +225,8 @@ vec_env = DummyVecEnv(
     ]
 )
 model = PPO2("MlpPolicy", vec_env, verbose=2)
-num_iterations: int = int(1e3)
-model_name: str = f"PPO2_{num_iterations}_test_{'today'}.zip"
+num_iterations: int = int(1e6)
+model_name: str = f"PPO2_{num_iterations}_test_{'default_rebuilding-1e6'}.zip"
 model.learn(num_iterations)
 # model.save(model_name)
 
@@ -221,8 +234,8 @@ model.learn(num_iterations)
 # library is the same model trained for 1000000 iterations, which we
 # will now load
 # model.load(model_name)
-
-
+#
+#
 # This is a stable_baselines PPO2 model. PPO2 requires vectorized
 # environments to run, so the model wrapper should convert between
 # vectorized and non-vectorized environments.
@@ -387,9 +400,14 @@ class GymTrainedAlgorithmVectorized(BaseAlgorithm):
 
 evaluation_algorithm = GymTrainedAlgorithmVectorized()
 evaluation_simulation = _random_sim_builder()
-evaluation_simulation.update_scheduler(evaluation_algorithm)
+evaluation_simulation.update_scheduler(evaluation_algorithm, GymTrainedInterface)
+edf_simulation = deepcopy(evaluation_simulation)
+rr_simulation = deepcopy(evaluation_simulation)
+edf_simulation.update_scheduler(SortedSchedulingAlgo(earliest_deadline_first))
+rr_simulation.update_scheduler(RoundRobin(first_come_first_served))
 
-# Make a new, single-use environment with only charging rewards.
+# Make a new, single-use environment with only charging rewards. One can do this by
+# explicitly defining which rewards, observations, and actions to include.
 observation_objects: List[SimObservation] = default_observation_objects
 action_object: SimAction = default_action_object
 reward_functions: List[Callable[[BaseSimEnv], float]] = [
@@ -411,6 +429,19 @@ evaluation_algorithm.register_env(eval_env)
 evaluation_algorithm.register_model(StableBaselinesRLModel(model))
 
 evaluation_simulation.run()
+edf_simulation.run()
+rr_simulation.run()
 
-plt.plot(acnsim.aggregate_current(evaluation_simulation))
+fig, axs = plt.subplots(3)
+rl = axs[0].plot(evaluation_simulation.charging_rates[0], label="RL Agent")
+edf = axs[0].plot(rr_simulation.charging_rates[0], label="EDF")
+axs[1].plot(evaluation_simulation.charging_rates[1])
+axs[1].plot(rr_simulation.charging_rates[1])
+axs[2].plot(acnsim.aggregate_current(evaluation_simulation))
+axs[2].plot(acnsim.aggregate_current(rr_simulation))
+
+axs[0].title.set_text("Current, Line 1")
+axs[1].title.set_text("Current, Line 2")
+axs[2].title.set_text("Total Current")
+
 plt.show()

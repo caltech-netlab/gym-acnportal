@@ -200,9 +200,45 @@ class TestMagnitudesObservation(TestConstraintObservation):
             "Constraint", [cls.attribute_name]
         )(cls.magnitudes)
 
-    def test_constraint_matrix_observation(self) -> None:
+    def test_magnitudes_observation(self) -> None:
         np.testing.assert_equal(
             self.sim_observation.get_obs(self.interface), self.magnitudes
+        )
+
+
+class TestPhasesObservation(unittest.TestCase):
+    # noinspection PyMissingOrEmptyDocstring
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.interface = create_autospec(GymTrainedInterface)
+        cls.sim_observation: Optional[obs.SimObservation] = obs.phases_observation()
+        cls.phases = np.array([0, 120, 240])
+        cls.attribute_name: Optional[str] = None
+        cls.obs_name: Optional[str] = "phases"
+        cls.attribute_name = "phases"
+        cls.obs_shape = cls.phases.shape
+        cls.interface.infrastructure_info = lambda: namedtuple(
+            "InfrastructureInfo", [cls.attribute_name]
+        )(cls.phases)
+
+    def test_space_function(self) -> None:
+        if self.sim_observation is None:
+            return
+        out_space: Space = self.sim_observation.get_space(self.interface)
+        self.assertEqual(out_space.shape, self.obs_shape)
+        np.testing.assert_equal(out_space.low, -np.inf * np.ones(self.obs_shape))
+        np.testing.assert_equal(out_space.high, np.inf * np.ones(self.obs_shape))
+        self.assertEqual(out_space.dtype, "float")
+
+    def test_correct_on_init_name(self) -> None:
+        if self.obs_name is None:
+            return
+        self.assertEqual(self.sim_observation.name, self.obs_name)
+
+    def test_phases_observation(self) -> None:
+        np.testing.assert_equal(
+            self.sim_observation.get_obs(self.interface),
+            self.phases
         )
 
 
