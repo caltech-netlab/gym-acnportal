@@ -9,8 +9,8 @@ import numpy as np
 from acnportal.acnsim import EV
 from gym import Space
 
-from .. import observation as obs
-from ...interfaces import GymTrainedInterface
+from gym_acnportal.gym_acnsim.envs import observation as obs
+from gym_acnportal.gym_acnsim.interfaces import GymTrainedInterface
 
 
 class TestSimObservation(unittest.TestCase):
