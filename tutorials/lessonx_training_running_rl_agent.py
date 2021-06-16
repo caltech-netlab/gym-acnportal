@@ -30,6 +30,9 @@ from typing import List, Callable, Optional, Dict, Any
 import numpy as np
 import gym
 import pytz
+from acnportal.acnsim.interface import SessionInfo
+
+from acnportal.algorithms import BaseAlgorithm
 from gym.wrappers import FlattenObservation
 from gym_acnportal import GymTrainedInterface, GymTrainingInterface
 from matplotlib import pyplot as plt
@@ -38,9 +41,10 @@ from stable_baselines.common import BaseRLModel
 from stable_baselines.common.vec_env import DummyVecEnv
 
 from acnportal import acnsim
-from acnportal.acnsim import events, models, Simulator
+from acnportal.acnsim import events, models, Simulator, Interface
 
-from gym_acnportal.algorithms import SimRLModelWrapper
+from gym_acnportal import GymTrainedInterface, GymTrainingInterface
+from gym_acnportal.algorithms import SimRLModelWrapper, GymBaseAlgorithm
 from gym_acnportal.gym_acnsim.envs.action_spaces import SimAction
 from gym_acnportal.gym_acnsim.envs import (
     BaseSimEnv,
@@ -158,15 +162,16 @@ def _random_sim_builder(
     )
 
 
-def interface_generating_function() -> Interface:
+def interface_generating_function(iface_type=GymTrainingInterface) -> Interface:
     """
     Initializes a simulation with random events on a 1 phase, 1
     constraint ACN (simple_acn), with 1 EVSE
     """
     schedule_rl = None
     # Simulation to be wrapped
-    sim = _random_sim_builder(schedule_rl, GymTrainingInterface)
-    return sim.generate_interface(GymTrainingInterface)
+    sim = _random_sim_builder(schedule_rl, iface_type=iface_type)
+    iface = iface_type(sim)
+    return iface
 
 
 # ACN-Sim gym environments wrap an interface to an ACN-Sim
@@ -222,13 +227,13 @@ vec_env = DummyVecEnv(
 model = PPO2("MlpPolicy", vec_env, verbose=2)
 num_iterations: int = int(1e6)
 model_name: str = f"PPO2_{num_iterations}_test_{'default_rebuilding-1e6'}.zip"
-# model.learn(num_iterations)
+model.learn(num_iterations)
 # model.save(model_name)
 
 # We've trained the above model for 10000 iterations. Packaged with this
 # library is the same model trained for 1000000 iterations, which we
 # will now load
-model.load(model_name)
+# model.load(model_name)
 #
 #
 # This is a stable_baselines PPO2 model. PPO2 requires vectorized
@@ -361,7 +366,7 @@ class GymTrainedAlgorithmVectorized(BaseAlgorithm):
         """
         self._model = new_model
 
-    def schedule(self, active_evs) -> Dict[str, List[float]]:
+    def schedule(self, active_sessions: List[SessionInfo]) -> Dict[str, List[float]]:
         """ Creates a schedule of charging rates for each EVSE in the
         network. This only works if a model and environment have been
         registered.
@@ -394,7 +399,8 @@ class GymTrainedAlgorithmVectorized(BaseAlgorithm):
 
 
 evaluation_algorithm = GymTrainedAlgorithmVectorized()
-evaluation_simulation = _random_sim_builder(evaluation_algorithm, GymTrainedInterface)
+evaluation_simulation = _random_sim_builder()
+evaluation_simulation.update_scheduler(evaluation_algorithm, GymTrainedInterface)
 edf_simulation = deepcopy(evaluation_simulation)
 rr_simulation = deepcopy(evaluation_simulation)
 edf_simulation.update_scheduler(SortedSchedulingAlgo(earliest_deadline_first))

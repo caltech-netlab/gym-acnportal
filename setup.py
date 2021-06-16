@@ -29,6 +29,5 @@ setuptools.setup(
     install_requires=[
         "acnportal @ git+https://github.com/zach401/acnportal" "@dev#egg=acnportal",
         "gym>=0.15.4",
-        "numpy",
     ],
 )

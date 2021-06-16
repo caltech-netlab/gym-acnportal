@@ -6,7 +6,9 @@ import numpy as np
 
 from typing import Optional, Dict, List, Any
 
-from acnportal.acnsim import Interface, EV
+from acnportal.acnsim.interface import SessionInfo
+
+from acnportal.acnsim import Interface
 from acnportal.algorithms import BaseAlgorithm
 
 from gym_acnportal.gym_acnsim.envs import BaseSimEnv
@@ -160,7 +162,7 @@ class GymBaseAlgorithm(BaseAlgorithm):
         if self._interface is not None:
             self.env.interface = self._interface
 
-    def schedule(self, active_evs) -> Dict[str, List[float]]:
+    def schedule(self, active_sessions: List[SessionInfo]) -> Dict[str, List[float]]:
         """ NOT IMPLEMENTED IN GymBaseAlgorithm. """
         raise NotImplementedError
 
@@ -218,7 +220,7 @@ class GymTrainedAlgorithm(GymBaseAlgorithm):
         """
         self._model = model
 
-    def schedule(self, active_evs: List[EV]) -> Dict[str, List[float]]:
+    def schedule(self, active_sessions: List[SessionInfo]) -> Dict[str, List[float]]:
         """ Creates a schedule of charging rates for each EVSE in the
         network. This only works if a model and environment have been
         registered.
