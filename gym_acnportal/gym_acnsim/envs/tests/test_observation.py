@@ -59,7 +59,7 @@ class TestEVObservationClass(unittest.TestCase):
         cls.ev2.station_id = "T3"
         cls.remaining_amp_periods2 = 10
         cls.interface: Any = create_autospec(GymTrainedInterface)
-        cls.interface._active_evs = [cls.ev1, cls.ev2]
+        cls.interface.active_sessions = lambda: [cls.ev1, cls.ev2]
 
         cls.interface.remaining_amp_periods = lambda ev: (
             cls.remaining_amp_periods1
