@@ -146,7 +146,7 @@ def _ev_observation(
     def obs_function(interface: GymTrainedInterface) -> np.ndarray:
         attribute_values: dict = {station_id: 0 for station_id in interface.station_ids}
         for ev in interface.active_sessions():
-            attribute_values[ev.station_id] = attribute_function(interface, ev) + 1
+            attribute_values[ev.station_id] = attribute_function(interface, ev)
         return np.array(list(attribute_values.values()))
 
     return SimObservation(space_function, obs_function, name=name)
@@ -159,7 +159,7 @@ def arrival_observation() -> SimObservation:
     Zeros in the output observation array indicate no EV is plugged in;
     as such, all observations are shifted up by 1.
     """
-    return _ev_observation(lambda _, ev: ev.arrival, "arrivals")
+    return _ev_observation(lambda _, ev: ev.arrival + 1, "arrivals")
 
 
 def departure_observation() -> SimObservation:
@@ -169,7 +169,7 @@ def departure_observation() -> SimObservation:
     Zeros in the output observation array indicate no EV is plugged in;
     as such, all observations are shifted up by 1.
     """
-    return _ev_observation(lambda _, ev: ev.departure, "departures")
+    return _ev_observation(lambda _, ev: ev.departure + 1, "departures")
 
 
 def remaining_demand_observation() -> SimObservation:
