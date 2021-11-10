@@ -233,6 +233,11 @@ class GymTrainingInterface(GymTrainedInterface):
                 f"updated with zeros."
             )
 
+        # If max_recompute is not 1, resolve will need to be set manually to False
+        # to initiate the while loop in step().
+        if self._simulator._resolve:
+            self._simulator._resolve = False
+
         schedule_is_feasible = self.is_feasible(new_schedule)
         if force_feasibility and not schedule_is_feasible:
             return self._simulator.event_queue.empty(), schedule_is_feasible
