@@ -240,5 +240,9 @@ class GymTrainingInterface(GymTrainedInterface):
 
         schedule_is_feasible = self.is_feasible(new_schedule)
         if force_feasibility and not schedule_is_feasible:
+            warnings.warn(
+                "Passing an infeasible schedule to environment while "
+                "force_feasibility=True.Environment will not progress."
+            )
             return self._simulator.event_queue.empty(), schedule_is_feasible
         return self._simulator.step(new_schedule), schedule_is_feasible
