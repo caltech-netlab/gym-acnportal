@@ -168,7 +168,7 @@ class GymTrainedInterface(Interface):
             float: Total energy delivered in the last period, in
                 amp-periods.
         """
-        return sum([ev.current_charging_rate for ev in self.active_evs])
+        return sum([ev.current_charging_rate for ev in self._active_evs])
 
     # TODO: Docs and typing for this function.
     def current_constraint_currents(self, input_schedule: object) -> object:
@@ -221,12 +221,10 @@ class GymTrainingInterface(GymTrainedInterface):
         """
         # Check that length of new schedules is not less than
         # max_recompute.
-        # TODO: Test against the case where max recompute is None.
-        #  Also, think about what should be done when max recompute is None regarding
-        #  this warning.
-        if len(new_schedule) == 0 or (
-            self._simulator.max_recompute is not None
-            and len(list(new_schedule.values())[0]) < self._simulator.max_recompute
+        if (
+            len(new_schedule) == 0
+            or self._simulator.max_recompute is None
+            or len(list(new_schedule.values())[0]) < self._simulator.max_recompute
         ):
             warnings.warn(
                 f"Length of schedules is less than this simulation's "
@@ -235,7 +233,16 @@ class GymTrainingInterface(GymTrainedInterface):
                 f"updated with zeros."
             )
 
+        # If max_recompute is not 1, resolve will need to be set manually to False
+        # to initiate the while loop in step().
+        if self._simulator._resolve:
+            self._simulator._resolve = False
+
         schedule_is_feasible = self.is_feasible(new_schedule)
         if force_feasibility and not schedule_is_feasible:
+            warnings.warn(
+                "Passing an infeasible schedule to environment while "
+                "force_feasibility=True.Environment will not progress."
+            )
             return self._simulator.event_queue.empty(), schedule_is_feasible
         return self._simulator.step(new_schedule), schedule_is_feasible
